@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="AutoImportSettings">
-    <option name="autoReloadType" value="SELECTIVE" />
-  </component>
   <component name="ChangeListManager">
-    <list default="true" id="c53b469a-3c45-4d25-9eb7-83bbdeb6da87" name="Changes" comment="Initial commit from Create Next App">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(root)/books/new/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/books/new/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/UploadForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/UploadForm.tsx" afterDir="false" />
-    </list>
+    <list default="true" id="c53b469a-3c45-4d25-9eb7-83bbdeb6da87" name="Changes" comment="Initial commit from Create Next App" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -17,25 +10,10 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "mcarlod"
-  }
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 6
 }]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/mcarlod/studymax.git",
-    "accountId": "b9439f98-6cac-4d78-b1cf-43d01c12badb"
-  }
-}]]></component>
-  <component name="ProblemsViewState">
-    <option name="selectedTabId" value="CurrentFile" />
-  </component>
-  <component name="ProjectColorInfo">{
-  &quot;customColor&quot;: &quot;&quot;,
-  &quot;associatedIndex&quot;: 6
-}</component>
   <component name="ProjectId" id="3C1KLMyLHlRLmscbO1tf248UeRL" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -46,11 +24,8 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "setup-and-ui",
-    "js.debugger.nextJs.config.created.client": "true",
-    "js.debugger.nextJs.config.created.server": "true",
+    "git-widget-placeholder": "master",
     "junie.onboarding.icon.badge.shown": "true",
     "last_opened_file_path": "C:/Users/carlo/WebstormProjects/studymax",
     "node.js.detected.package.eslint": "true",
@@ -59,31 +34,9 @@
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "C:\\Users\\carlo\\WebstormProjects\\studymax\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\carlo\WebstormProjects\studymax\app\(root)" />
-      <recent name="C:\Users\carlo\WebstormProjects\studymax\public" />
-    </key>
-  </component>
-  <component name="RunManager" selected="npm.Next.js: server-side">
-    <configuration name="Next.js: debug client-side" type="JavascriptDebugType" uri="http://localhost:3000/">
-      <method v="2" />
-    </configuration>
-    <configuration name="Next.js: server-side" type="js.build_tools.npm">
-      <package-json value="$PROJECT_DIR$/package.json" />
-      <command value="run" />
-      <scripts>
-        <script value="dev" />
-      </scripts>
-      <node-interpreter value="project" />
-      <envs />
-      <method v="2" />
-    </configuration>
-  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -98,8 +51,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1775547579042</updated>
-      <workItem from="1775547580363" duration="7710000" />
-      <workItem from="1775721720853" duration="8637000" />
+      <workItem from="1775547580363" duration="390000" />
     </task>
     <task id="LOCAL-00001" summary="Initial commit from Create Next App">
       <option name="closed" value="true" />
@@ -114,17 +66,6 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Initial commit from Create Next App" />

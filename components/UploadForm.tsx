@@ -51,11 +51,17 @@ const UploadForm = () => {
 
   const onSubmit = async (values: FormValues) => {
     setIsSubmitting(true);
-    // Simulate API call
-    console.log(values);
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-    setIsSubmitting(false);
-    alert("Book uploaded successfully!");
+    try {
+      // Simulate API call
+      console.log(values);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      alert("Book uploaded successfully!");
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Failed to upload book. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const pdfFile = useWatch({
@@ -82,8 +88,17 @@ const UploadForm = () => {
                 <FormControl>
                   <div
                     onClick={() => pdfInputRef.current?.click()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        pdfInputRef.current?.click();
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Upload PDF file"
                     className={cn(
-                      "upload-dropzone border-2 border-dashed border-[#8B7355]/30",
+                      "upload-dropzone border-2 border-dashed border-[#8B7355]/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#663820] focus-visible:ring-offset-2",
                       pdfFile && "upload-dropzone-uploaded"
                     )}
                   >
@@ -139,8 +154,17 @@ const UploadForm = () => {
                 <FormControl>
                   <div
                     onClick={() => coverInputRef.current?.click()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        coverInputRef.current?.click();
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Upload cover image"
                     className={cn(
-                      "upload-dropzone border-2 border-dashed border-[#8B7355]/30",
+                      "upload-dropzone border-2 border-dashed border-[#8B7355]/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#663820] focus-visible:ring-offset-2",
                       coverImage && "upload-dropzone-uploaded"
                     )}
                   >

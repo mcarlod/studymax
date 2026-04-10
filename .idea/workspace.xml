@@ -7,7 +7,7 @@
     <list default="true" id="c53b469a-3c45-4d25-9eb7-83bbdeb6da87" name="Changes" comment="Initial commit from Create Next App">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/(root)/books/new/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/books/new/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/UploadForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/UploadForm.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/(root)/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(root)/page.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -99,7 +99,7 @@
       <option name="presentableId" value="Default" />
       <updated>1775547579042</updated>
       <workItem from="1775547580363" duration="7710000" />
-      <workItem from="1775721720853" duration="8637000" />
+      <workItem from="1775721720853" duration="9676000" />
     </task>
     <task id="LOCAL-00001" summary="Initial commit from Create Next App">
       <option name="closed" value="true" />

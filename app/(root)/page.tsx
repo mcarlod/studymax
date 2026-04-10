@@ -5,7 +5,7 @@ import BookCard from "@/components/BookCard";
 
 const Page = () => {
     return (
-        <main className={"wrapper container"}>
+        <section className={"wrapper container"}>
             <HeroSection />
 
             <div className={"library-books-grid"}>
@@ -13,7 +13,7 @@ const Page = () => {
                     <BookCard key={book._id} title={book.title} author={book.author} coverURL={book.coverURL} slug={book.slug}/>
                 ))}
             </div>
-        </main>
+        </section>
     )
 }
 export default Page

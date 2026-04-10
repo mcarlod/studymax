@@ -4,6 +4,7 @@ import { Control, FieldPath, FieldValues } from 'react-hook-form';
 import { LucideIcon } from 'lucide-react';
 import z from 'zod';
 import { UploadSchema } from '@/lib/zod';
+import { PLANS, PlanType } from "@/lib/subscription-constants";
 
 // ============================================
 // DATABASE MODELS
@@ -116,7 +117,6 @@ export interface FileUploadFieldProps<T extends FieldValues> {
     placeholder: string;
     hint: string;
 }
-import {PLANS, PlanType} from "@/lib/subscription-constants";
 
 export interface SessionCheckResult {
     allowed: boolean;

@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Upload, Image as ImageIcon, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { UploadSchema } from "@/lib/zod";
 
 import {
   Form,
@@ -20,15 +21,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import LoadingOverlay from "@/components/LoadingOverlay";
 
-const formSchema = z.object({
-  pdfFile: z.any().refine((file) => file instanceof File, "PDF file is required"),
-  coverImage: z.any().optional(),
-  title: z.string().min(1, "Title is required"),
-  author: z.string().min(1, "Author name is required"),
-  voice: z.string().min(1, "Please choose a voice"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof UploadSchema>;
 
 const VOICES = {
   male: [
@@ -48,7 +41,7 @@ const UploadForm = () => {
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(UploadSchema),
     defaultValues: {
       title: "",
       author: "",
@@ -65,8 +58,14 @@ const UploadForm = () => {
     alert("Book uploaded successfully!");
   };
 
-  const pdfFile = form.watch("pdfFile");
-  const coverImage = form.watch("coverImage");
+  const pdfFile = useWatch({
+    control: form.control,
+    name: "pdfFile",
+  });
+  const coverImage = useWatch({
+    control: form.control,
+    name: "coverImage",
+  });
 
   return (
     <div className="new-book-wrapper max-w-3xl mx-auto py-10">

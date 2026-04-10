@@ -95,7 +95,7 @@ export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'im
 // Pre-configured VAPI assistant ID (hardcoded for this app)
 export const ASSISTANT_ID = process.env.NEXT_PUBLIC_ASSISTANT_ID!;
 
-// 11Labs Voice IDs - Optimized for conversational AI
+// 11 Labs Voice IDs - Optimized for conversational AI
 // Voices selected for natural, engaging book conversations
 export const voiceOptions = {
     // Male voices
@@ -150,7 +150,7 @@ export const VAPI_DASHBOARD_CONFIG = {
 };
 
 // Clerk appearance overrides - Warm Literary Style
-// Note: Tailwind requires static class names at build time, so we hardcode color values here
+// Note: Tailwind requires static class names at build time, so hardcode color values here
 export const CLERK_AUTH_APPEARANCE_OVERRIDE = {
     rootBox: 'mx-auto',
     card: 'shadow-none border-none rounded-xl bg-transparent',

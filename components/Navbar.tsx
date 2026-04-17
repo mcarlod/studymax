@@ -1,5 +1,6 @@
 'use client';
 
+import React from "react";
 import Link from "next/link";
 import {usePathname} from "next/navigation";
 import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
@@ -15,6 +16,13 @@ const navItems = [
 const Navbar = () => {
     const pathName = usePathname();
     const { isSignedIn, isLoaded, user } = useUser();
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const showAuth = mounted && isLoaded;
 
     return (
         <header className="w-full fixed z-50 bg-(--bg-primary)">
@@ -34,8 +42,8 @@ const Navbar = () => {
                         )
                     })}
 
-                    <div className="flex gap-4 items-center">
-                        {!isLoaded ? (
+                    <div className="flex gap-4 items-center min-w-[100px] justify-end">
+                        {!showAuth ? (
                             <div className="w-20 h-8 bg-gray-200 animate-pulse rounded-lg" />
                         ) : !isSignedIn ? (
                             <SignInButton mode="modal">
@@ -44,7 +52,7 @@ const Navbar = () => {
                         ) : (
                             <div className="nav-user-link">
                                 <UserButton />
-                                {user?.firstName && (
+                                {showAuth && user?.firstName && (
                                     <Link href="/" className="nav-user-name">
                                         {user.firstName}
                                     </Link>

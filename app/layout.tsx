@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Serif, Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -23,19 +24,18 @@ export const metadata: Metadata = {
     description: "Transform your books into interactive AI conversations. Upload PDFs, and chat with your books using voice.",
 };
 
-export default function RootLayout({
-                                       children,
-                                   }: Readonly<{
+export default function RootLayout({ children }: Readonly<{
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <body className={`${ibmPlexSerif.variable} ${inter.variable} relative font-sans antialiased` }>
                 <ClerkProvider>
-                    <Navbar/>
-                    <main className="pt-[var(--navbar-height)]">
+                    <Navbar />
+                    <main>
                         {children}
                     </main>
+                    <Toaster />
                 </ClerkProvider>
             </body>
         </html>

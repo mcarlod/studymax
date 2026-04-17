@@ -56,7 +56,6 @@ export interface IVoiceSession extends Document {
 export type BookUploadFormValues = z.infer<typeof UploadSchema>;
 
 export interface CreateBook {
-    clerkId: string;
     title: string;
     author: string;
     persona?: string;
@@ -77,7 +76,7 @@ export interface TextSegment {
 export interface BookCardProps {
     title: string;
     author: string;
-    coverURL: string;
+    coverURL?: string;
     slug: string;
 }
 

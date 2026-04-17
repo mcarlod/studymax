@@ -6,8 +6,21 @@ const nextConfig: NextConfig = {
         {
             protocol: 'https',
             hostname: 'covers.openlibrary.org'
+        },
+        {
+            protocol: 'https',
+            hostname: 'bkxd0qkkxjqrumuh.public.blob.vercel-storage.com'
+        },
+        {
+            protocol: 'https',
+            hostname: 'placehold.co'
+        },
+    ]},
+    experimental: {
+        serverActions: {
+            bodySizeLimit: '10mb'
         }
-    ]}
+    }
 };
 
 export default nextConfig;

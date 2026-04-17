@@ -189,7 +189,10 @@ export const searchBookSegments = async (bookId: string, query: string, limit: n
     try {
         await connectToDatabase();
 
-        console.log(`Searching for: "${query}" in book ${bookId}`);
+        console.log(`Searching for book segments`, {
+            bookId,
+            queryLength: query.length,
+        });
 
         const bookObjectId = new mongoose.Types.ObjectId(bookId);
 

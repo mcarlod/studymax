@@ -6,14 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="c53b469a-3c45-4d25-9eb7-83bbdeb6da87" name="Changes" comment="Initial commit from Create Next App">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/api/upload/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/upload/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/globals.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/BookCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/BookCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/FileUploader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/FileUploader.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/UploadForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/UploadForm.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/constants.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/constants.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/types.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types.d.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -64,6 +56,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\carlo\\WebstormProjects\\studymax\\node_modules\\typescript\\lib&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
@@ -106,7 +99,7 @@
       <updated>1775547579042</updated>
       <workItem from="1775547580363" duration="7710000" />
       <workItem from="1775721720853" duration="8637000" />
-      <workItem from="1776410824149" duration="3501000" />
+      <workItem from="1776410824149" duration="4306000" />
     </task>
     <task id="LOCAL-00001" summary="Initial commit from Create Next App">
       <option name="closed" value="true" />

@@ -176,7 +176,8 @@
         @apply max-w-7xl px-5 mx-auto w-full;
     }
     .container {
-        @apply pt-[calc(var(--navbar-height) + 1.5rem)] pb-18 min-h-screen;
+        padding-top: calc(var(--navbar-height) + 1.5rem);
+        @apply pb-20 min-h-screen;
     }
     .navItem {
         @apply px-1 sm:px-3 text-sm sm:text-base font-medium flex items-center cursor-pointer text-[var(--text-primary)];
@@ -194,7 +195,7 @@
         @apply rounded-2xl bg-[var(--accent-light)];
     }
     .clerk-subscriptions {
-        @apply py-18 min-h-screen max-w-7xl px-5 mx-auto w-full flex flex-col pb-12 items-center container;
+        @apply py-20 min-h-screen max-w-7xl px-5 mx-auto w-full flex flex-col pb-12 items-center container;
     }
     .page-title {
         @apply !text-3xl font-bold text-center;
@@ -203,7 +204,7 @@
         @apply !mt-3 text-center text-lg;
     }
     .new-book {
-        @apply max-w-7xl px-5 mx-auto w-full space-y-6 py-18 min-h-screen;
+        @apply max-w-7xl px-5 mx-auto w-full space-y-6 py-20 min-h-screen;
     }
     .new-book-wrapper {
         @apply mx-auto max-w-2xl space-y-6 mt-12 mb-20;

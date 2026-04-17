@@ -4,7 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c53b469a-3c45-4d25-9eb7-83bbdeb6da87" name="Changes" comment="Initial commit from Create Next App" />
+    <list default="true" id="c53b469a-3c45-4d25-9eb7-83bbdeb6da87" name="Changes" comment="Initial commit from Create Next App">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/api/upload/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/api/upload/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/globals.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/BookCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/BookCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/FileUploader.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/FileUploader.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/components/UploadForm.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/UploadForm.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/constants.ts" beforeDir="false" afterPath="$PROJECT_DIR$/lib/constants.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/next.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/types.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types.d.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -96,7 +106,7 @@
       <updated>1775547579042</updated>
       <workItem from="1775547580363" duration="7710000" />
       <workItem from="1775721720853" duration="8637000" />
-      <workItem from="1776410824149" duration="1635000" />
+      <workItem from="1776410824149" duration="3501000" />
     </task>
     <task id="LOCAL-00001" summary="Initial commit from Create Next App">
       <option name="closed" value="true" />

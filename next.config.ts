@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
             protocol: 'https',
             hostname: 'bkxd0qkkxjqrumuh.public.blob.vercel-storage.com'
         },
+        {
+            protocol: 'https',
+            hostname: 'placehold.co'
+        },
     ]},
     experimental: {
         serverActions: {

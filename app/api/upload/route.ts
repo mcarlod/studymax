@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {handleUpload, HandleUploadBody} from "@vercel/blob/client";
 import {auth} from "@clerk/nextjs/server";
-import {MAX_FILE_SIZE} from "@/lib/constants";
+import {MAX_FILE_SIZE, MAX_IMAGE_SIZE, ACCEPTED_IMAGE_TYPES} from "@/lib/constants";
 
 export async function POST(request: Request): Promise<NextResponse> {
 
@@ -12,7 +12,7 @@ export async function POST(request: Request): Promise<NextResponse> {
             token: process.env.BLOB_READ_WRITE_TOKEN,
             body,
             request,
-            onBeforeGenerateToken: async () => {
+            onBeforeGenerateToken: async (pathname, clientPayload) => {
                 const {userId} = await auth()
 
                 // block anonymous uploads
@@ -20,10 +20,15 @@ export async function POST(request: Request): Promise<NextResponse> {
                     throw new Error('Unauthorized: User not authenticated')
                 }
 
+                // Logic to derive maximumSizeInBytes from the requested content type
+                // clientPayload should contain the contentType when passed from the client
+                const contentType = clientPayload ? JSON.parse(clientPayload).contentType : null;
+                const isImage = contentType && ACCEPTED_IMAGE_TYPES.includes(contentType);
+
                 return {
-                    allowedContentTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+                    allowedContentTypes: ['application/pdf', ...ACCEPTED_IMAGE_TYPES],
                     addRandomSuffix: true,
-                    maximumSizeInBytes: MAX_FILE_SIZE,
+                    maximumSizeInBytes: isImage ? MAX_IMAGE_SIZE : MAX_FILE_SIZE,
                     tokenPayload: JSON.stringify({userId})
                 }
             },

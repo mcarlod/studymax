@@ -67,13 +67,15 @@ const UploadForm = () => {
 
             if(parsedPDF.content.length === 0) {
                 toast.error("Failed to parse PDF. Please try again with a different file.");
+                setIsSubmitting(false);
                 return;
             }
 
             const uploadedPdfBlob = await upload(fileTitle, pdfFile, {
                 access: 'public',
                 handleUploadUrl: '/api/upload',
-                contentType: 'application/pdf'
+                contentType: 'application/pdf',
+                clientPayload: JSON.stringify({ contentType: 'application/pdf' })
             });
 
             let coverUrl: string;
@@ -83,7 +85,8 @@ const UploadForm = () => {
                 const uploadedCoverBlob = await upload(`${fileTitle}_cover.png`, coverFile, {
                     access: 'public',
                     handleUploadUrl: '/api/upload',
-                    contentType: coverFile.type
+                    contentType: coverFile.type,
+                    clientPayload: JSON.stringify({ contentType: coverFile.type })
                 });
                 coverUrl = uploadedCoverBlob.url;
             } else {
@@ -93,7 +96,8 @@ const UploadForm = () => {
                 const uploadedCoverBlob = await upload(`${fileTitle}_cover.png`, blob, {
                     access: 'public',
                     handleUploadUrl: '/api/upload',
-                    contentType: 'image/png'
+                    contentType: 'image/png',
+                    clientPayload: JSON.stringify({ contentType: 'image/png' })
                 });
                 coverUrl = uploadedCoverBlob.url;
             }
@@ -114,7 +118,12 @@ const UploadForm = () => {
             if(book.alreadyExists) {
                 toast.info("Book with same title already exists.");
                 form.reset()
-                router.push(`/books/${existsCheck.book.slug}`)
+                const slug = book.data?.slug || existsCheck.book?.slug;
+                if(slug) {
+                    router.push(`/books/${slug}`)
+                } else {
+                    router.push('/')
+                }
                 return;
             }
 

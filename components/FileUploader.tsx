@@ -36,12 +36,23 @@ const FileUploader = <T extends FieldValues>({
     const onRemove = useCallback(
         (e: React.MouseEvent) => {
             e.stopPropagation();
-            onChange(null);
+            onChange(undefined);
             if (inputRef.current) {
                 inputRef.current.value = '';
             }
         },
         [onChange]
+    );
+
+    const onKeyDown = useCallback(
+        (e: React.KeyboardEvent) => {
+            if (disabled) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                inputRef.current?.click();
+            }
+        },
+        [disabled]
     );
 
     const isUploaded = !!value;
@@ -56,6 +67,10 @@ const FileUploader = <T extends FieldValues>({
                         isUploaded && 'upload-dropzone-uploaded'
                     )}
                     onClick={() => !disabled && inputRef.current?.click()}
+                    onKeyDown={onKeyDown}
+                    tabIndex={disabled ? -1 : 0}
+                    role="button"
+                    aria-disabled={disabled}
                 >
                     <input
                         type="file"

@@ -7,6 +7,7 @@ import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/book-segment.model";
 import {auth} from "@clerk/nextjs/server";
 import mongoose from "mongoose";
+import {revalidatePath} from "next/cache";
 
 export const getBookBySlug = async (slug: string) => {
     try {
@@ -108,6 +109,9 @@ export const createBook = async (data: CreateBook) => {
         // Todo: Check subscription limits before creating a book
 
         const book = await Book.create({ ...data, clerkId: userId, slug, totalSegments: 0 });
+
+        revalidatePath('/');
+
         return {
             success: true,
             data: serializeData(book),

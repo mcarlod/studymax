@@ -63,7 +63,7 @@ const FileUploader = <T extends FieldValues>({
             <FormControl>
                 <div
                     className={cn(
-                        'upload-dropzone border-2 border-dashed border-[#8B7355]/20',
+                        'upload-dropzone upload-dropzone--beige border-2 border-dashed',
                         isUploaded && 'upload-dropzone-uploaded'
                     )}
                     onClick={() => !disabled && inputRef.current?.click()}

@@ -58,6 +58,7 @@ export function useVapi(book: IBook) {
     const timerRef = useRef<NodeJS.Timeout | null>(null);
     const startTimeRef = useRef<number | null>(null);
     const sessionIdRef = useRef<string | null>(null);
+    const [isStopping, setIsStopping] = useState(false);
     const isStoppingRef = useRef(false);
 
     // Finalize session exactly once
@@ -95,6 +96,7 @@ export function useVapi(book: IBook) {
         const handlers = {
             'call-start': () => {
                 isStoppingRef.current = false;
+                setIsStopping(false);
                 setStatus('starting'); // AI speaks first, wait for it
                 setCurrentMessage('');
                 setCurrentUserMessage('');
@@ -132,6 +134,8 @@ export function useVapi(book: IBook) {
 
             'call-end': () => {
                 // Don't reset isStoppingRef here - delayed events may still fire
+                isStoppingRef.current = false;
+                setIsStopping(false);
                 setStatus('idle');
                 setCurrentMessage('');
                 setCurrentUserMessage('');
@@ -337,6 +341,7 @@ export function useVapi(book: IBook) {
 
     const stop = useCallback(() => {
         isStoppingRef.current = true;
+        setIsStopping(true);
         getVapi().stop();
     }, []);
 
@@ -373,7 +378,7 @@ export function useVapi(book: IBook) {
         maxDurationSeconds,
         remainingSeconds,
         showTimeWarning,
-        isStopping: isStoppingRef.current,
+        isStopping,
     };
 }
 

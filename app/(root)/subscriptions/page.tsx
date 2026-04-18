@@ -12,7 +12,7 @@ export default function SubscriptionsPage() {
         </p>
       </div>
       
-      <div className="flex justify-center clerk-pricing-container">
+      <div className="flex justify-center clerk-pricing-container clerk-pricing-table-wrapper">
          <PricingTable />
       </div>
 
@@ -21,10 +21,6 @@ export default function SubscriptionsPage() {
           --cl-colors-primary: var(--primary);
           --cl-radius-card: var(--radius);
           background-color: transparent;
-        }
-        .clerk-pricing-container .cl-pricingTableCard {
-           border: 1px solid var(--border);
-           box-shadow: var(--shadow-soft);
         }
       `}</style>
     </div>

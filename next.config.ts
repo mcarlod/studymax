@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
     env: {
         NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+        NEXT_PUBLIC_VAPI_API_KEY: process.env.NEXT_PUBLIC_VAPI_API_KEY,
     },
     images: { remotePatterns: [
         {

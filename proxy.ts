@@ -5,8 +5,6 @@ export const proxy = clerkMiddleware({
     secretKey: process.env.CLERK_SECRET_KEY,
 });
 
-export default proxy;
-
 export const config = {
     matcher: [
         // Skip Next.js internals and all static files, unless found in search params

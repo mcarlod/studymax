@@ -63,7 +63,7 @@ const VapiControls = ({ book }: { book: IBook }) => {
 
                         <div className="flex flex-wrap justify-center md:justify-start gap-4">
                             <div className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-3">
-                                <span className={`w-2.5 h-2.5 rounded-full ${status === 'active' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-slate-300'}`}></span>
+                                <span className={`w-2.5 h-2.5 rounded-full ${status !== 'idle' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-slate-300'}`}></span>
                                 <span className="text-sm font-bold text-slate-600 uppercase tracking-wider">{status}</span>
                             </div>
                             <div className="px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-2">

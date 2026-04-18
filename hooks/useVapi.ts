@@ -299,7 +299,7 @@ export function useVapi(book: IBook) {
             // Map current messages to Vapi's expected format if history exists
             const modelMessages = messages.length > 0 
                 ? messages.map(msg => ({
-                    role: msg.role === 'user' ? 'user' : 'assistant',
+                    role: (msg.role === 'user' ? 'user' : 'assistant') as "user" | "assistant",
                     content: msg.content
                 }))
                 : undefined;
@@ -307,7 +307,9 @@ export function useVapi(book: IBook) {
             await getVapi().start(ASSISTANT_ID, {
                 firstMessage,
                 model: modelMessages ? {
-                    messages: modelMessages
+                    messages: modelMessages,
+                    provider: 'openai',
+                    model: 'gpt-4o'
                 } : undefined,
                 variableValues: {
                     title: book.title,

@@ -1,7 +1,21 @@
+'use client';
+
 import React from 'react'
 import Link from 'next/link'
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 const HeroSection = () => {
+    const { isSignedIn } = useUser();
+    const router = useRouter();
+
+    const handleAddBookClick = (e: React.MouseEvent) => {
+        if (!isSignedIn) {
+            e.preventDefault();
+            alert("Please sign in to add a new book.");
+        }
+    };
+
     return (
         <section className="wrapper mb-10 md:mb-16">
             <div className="library-hero-card">
@@ -13,7 +27,11 @@ const HeroSection = () => {
                             Convert your books into interactive AI conversations. <br className="hidden md:block" />
                             Listen, learn, and discuss your favorite reads.
                         </p>
-                        <Link href="/books/new" className="library-cta-primary mt-4 flex items-center justify-center">
+                        <Link 
+                            href="/books/new" 
+                            className="library-cta-primary mt-4 flex items-center justify-center"
+                            onClick={handleAddBookClick}
+                        >
                             <span className="text-3xl font-light mb-1 mr-2">+</span>
                             <span className="text-[#212a3b]">Add new book</span>
                         </Link>

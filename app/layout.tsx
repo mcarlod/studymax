@@ -30,7 +30,7 @@ export default function RootLayout({ children }: Readonly<{
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`${ibmPlexSerif.variable} ${inter.variable} relative font-sans antialiased` }>
-                <ClerkProvider>
+                <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
                     <Navbar />
                     <main>
                         {children}

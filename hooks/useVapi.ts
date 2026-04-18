@@ -279,7 +279,7 @@ export function useVapi(book: IBook) {
 
         try {
             // Check session limits and create session record
-            const result = await startVoiceSession(userId, book._id);
+            const result = await startVoiceSession(book._id);
 
             if (!result.success) {
                 setLimitError(result.error || 'Session limit reached. Please upgrade your plan.');

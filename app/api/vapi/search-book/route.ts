@@ -20,7 +20,7 @@ async function processBookSearch(bookId: unknown, query: unknown) {
 
     // Execute search
     console.log(`Executing search for bookId: ${bookIdStr}, queryLength: ${queryStr.length}`);
-    const searchResult = await searchBookSegments(bookIdStr, queryStr, 3, true);
+    const searchResult = await searchBookSegments(bookIdStr, queryStr, 3);
 
     // Return results
     if (!searchResult.success) {

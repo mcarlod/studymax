@@ -143,27 +143,25 @@ export const createBook = async (data: CreateBook) => {
         try {
             session.startTransaction();
 
-            const quota = await UserQuota.findOneAndUpdate(
+            // Check if quota needs initialization
+            let quota = await UserQuota.findOne({ clerkId: userId }).session(session);
+            
+            if (!quota) {
+                const bookCount = await Book.countDocuments({ clerkId: userId }).session(session);
+                [quota] = await UserQuota.create([{ clerkId: userId, count: bookCount }], { session });
+            }
+
+            // Atomic increment with limit check
+            const updatedQuota = await UserQuota.findOneAndUpdate(
                 {
                     clerkId: userId,
-                    $or: [
-                        { count: { $lt: limits.maxBooks } },
-                        { count: { $exists: false } }
-                    ]
+                    count: { $lt: limits.maxBooks }
                 },
-                {
-                    $inc: { count: 1 },
-                    $setOnInsert: { clerkId: userId }
-                },
-                {
-                    session,
-                    upsert: true,
-                    new: true,
-                    runValidators: true
-                }
+                { $inc: { count: 1 } },
+                { session, new: true }
             );
 
-            if (!quota) {
+            if (!updatedQuota) {
                 await session.abortTransaction();
                 return {
                     success: false,
@@ -176,41 +174,53 @@ export const createBook = async (data: CreateBook) => {
             await session.commitTransaction();
         } catch (err: any) {
             await session.abortTransaction();
-            // Handle upsert race for UserQuota
+            
+            // Handle duplicate key error (E11000)
             if (err.code === 11000) {
-                 // The upsert race happened, retry atomic increment
-                 try {
-                     const quota = await UserQuota.findOneAndUpdate(
-                         { 
-                             clerkId: userId, 
-                             count: { $lt: limits.maxBooks } 
-                         },
-                         { $inc: { count: 1 } },
-                         { new: true, runValidators: true }
-                     );
-                     
-                     if (quota) {
-                         // Proceed to create book if quota was incremented successfully
-                         // (Note: we already aborted the previous transaction, 
-                         // so we should start a new one or create without transaction if we are sure about cleanup)
-                         // For simplicity, we just create the book here.
-                         const newBookResult = await Book.create([{ ...data, clerkId: userId, slug, totalSegments: 0 }]);
-                         const newBook = newBookResult[0];
-                         revalidatePath('/');
-                         return {
-                             success: true,
-                             data: serializeData(newBook),
-                         }
-                     } else {
-                        return {
-                            success: false,
-                            error: `You have reached the maximum number of books allowed for your ${plan} plan (${limits.maxBooks}). Please upgrade to add more books.`,
-                            isBillingError: true,
-                        };
-                     }
-                 } catch (retryErr) {
-                     throw retryErr;
-                 }
+                const isUserQuotaRace = err.message?.includes('userquotas') || 
+                                       err.keyPattern?.clerkId;
+                
+                if (isUserQuotaRace) {
+                    // Start a fresh session/transaction for the retry
+                    const retrySession = await mongoose.startSession();
+                    try {
+                        let retryResult;
+                        await retrySession.withTransaction(async () => {
+                            const q = await UserQuota.findOneAndUpdate(
+                                { clerkId: userId, count: { $lt: limits.maxBooks } },
+                                { $inc: { count: 1 } },
+                                { session: retrySession, new: true }
+                            );
+
+                            if (!q) {
+                                throw new Error('QUOTA_EXCEEDED');
+                            }
+
+                            const [newBook] = await Book.create([{ ...data, clerkId: userId, slug, totalSegments: 0 }], { session: retrySession });
+                            retryResult = newBook;
+                        });
+                        
+                        if (retryResult) {
+                            revalidatePath('/');
+                            return {
+                                success: true,
+                                data: serializeData(retryResult),
+                            };
+                        }
+                    } catch (retryErr: any) {
+                        if (retryErr.message === 'QUOTA_EXCEEDED') {
+                            return {
+                                success: false,
+                                error: `You have reached the maximum number of books allowed for your ${plan} plan (${limits.maxBooks}). Please upgrade to add more books.`,
+                                isBillingError: true,
+                            };
+                        }
+                        // If it's another 11000 (e.g. Book slug), let it fall through or throw
+                        throw retryErr;
+                    } finally {
+                        await retrySession.endSession();
+                    }
+                }
             }
             throw err;
         } finally {
@@ -296,24 +306,20 @@ export const saveBookSegments = async (bookId: string, segments: TextSegment[]) 
 }
 
 // Searches book segments using MongoDB text search with regex fallback
-export const searchBookSegments = async (bookId: string, query: string, limit: number = 5, skipAuth: boolean = false) => {
+export const searchBookSegments = async (bookId: string, query: string, limit: number = 5) => {
     try {
-        if (!skipAuth) {
-            const { userId } = await auth();
-            if (!userId) {
-                return { success: false, error: 'Unauthorized', data: [] };
-            }
-            await connectToDatabase();
+        const { userId } = await auth();
+        if (!userId) {
+            return { success: false, error: 'Unauthorized', data: [] };
+        }
+        await connectToDatabase();
 
-            const book = await Book.findById(bookId).select('clerkId').lean();
-            if (!book) {
-                return { success: false, error: 'Book not found', data: [] };
-            }
-            if (book.clerkId !== userId) {
-                return { success: false, error: 'Forbidden', data: [] };
-            }
-        } else {
-            await connectToDatabase();
+        const book = await Book.findById(bookId).select('clerkId').lean();
+        if (!book) {
+            return { success: false, error: 'Book not found', data: [] };
+        }
+        if (book.clerkId !== userId) {
+            return { success: false, error: 'Forbidden', data: [] };
         }
 
         console.log(`Searching for book segments`, {

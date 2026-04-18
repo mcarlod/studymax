@@ -51,19 +51,23 @@ const UploadForm = () => {
         // PostHog -> Track Book Uploads...
 
         try {
-            const quotaCheck = await checkUserQuota();
-            if (!quotaCheck.allowed) {
-                toast.error(`You have reached the maximum number of books allowed for your ${quotaCheck.plan} plan (${quotaCheck.limit}). Please upgrade for more.`);
-                setIsSubmitting(false);
-                return;
-            }
-
             const existsCheck = await checkBookExists(data.title);
 
             if(existsCheck.exists && existsCheck.book) {
                 toast.info("Book with same title already exists.");
                 form.reset()
                 router.push(`/books/${existsCheck.book.slug}`)
+                setIsSubmitting(false);
+                return;
+            }
+
+            const quotaCheck = await checkUserQuota();
+            if (!quotaCheck.allowed) {
+                const errorMessage = (quotaCheck.plan && quotaCheck.limit)
+                    ? `You have reached the maximum number of books allowed for your ${quotaCheck.plan} plan (${quotaCheck.limit}). Please upgrade for more.`
+                    : "You have reached your book upload limit or there was an error checking your quota. Please try again later.";
+                toast.error(errorMessage);
+                setIsSubmitting(false);
                 return;
             }
 

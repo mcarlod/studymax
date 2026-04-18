@@ -4,11 +4,10 @@ import {BookCardProps} from "@/types";
 import Image from "next/image";
 import {DEFAULT_COVER_URL} from "@/lib/constants";
 import {useUser} from "@clerk/nextjs";
-import {useRouter} from "next/navigation";
+import Link from "next/link";
 
 const BookCard = ({ title, author, coverURL, slug }: BookCardProps) => {
     const { isSignedIn } = useUser();
-    const router = useRouter();
 
     const handleLinkClick = (e: React.MouseEvent) => {
         if (!isSignedIn) {
@@ -18,14 +17,9 @@ const BookCard = ({ title, author, coverURL, slug }: BookCardProps) => {
     };
 
     return (
-        <div 
-            onClick={() => {
-                if (!isSignedIn) {
-                    alert("Please sign in to view this book.");
-                } else {
-                    router.push(`/books/${slug}`);
-                }
-            }}
+        <Link 
+            href={`/books/${slug}`}
+            onClick={handleLinkClick}
             className="cursor-pointer"
         >
             <article className="book-card">
@@ -40,7 +34,7 @@ const BookCard = ({ title, author, coverURL, slug }: BookCardProps) => {
                     </figcaption>
                 </figure>
             </article>
-        </div>
+        </Link>
     )
 }
 export default BookCard

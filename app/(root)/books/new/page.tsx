@@ -1,6 +1,11 @@
 import UploadForm from "@/components/UploadForm";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
-const Page = () => {
+const Page = async () => {
+    const { userId } = await auth();
+    if (!userId) redirect("/");
+
     return (
         <main className="new-book">
             <section className="flex flex-col gap-5 text-center">

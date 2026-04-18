@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Serif, Inter } from "next/font/google";
+import { Bricolage_Grotesque, Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
-const ibmPlexSerif = IBM_Plex_Serif({
-    variable: "--font-ibm-plex-serif",
+const bricolageGrotesque = Bricolage_Grotesque({
+    variable: "--font-bricolage-grotesque",
     subsets: ['latin'],
-    weight: ['400', '500', '600', '700'],
+    weight: ['300', '400', '500', '600', '700', '800'],
     display: 'swap'
 });
 
@@ -29,7 +29,7 @@ export default function RootLayout({ children }: Readonly<{
 }>) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <body className={`${ibmPlexSerif.variable} ${inter.variable} relative font-sans antialiased` }>
+            <body className={`${bricolageGrotesque.variable} ${inter.variable} relative font-sans antialiased` }>
                 <ClerkProvider>
                     <Navbar />
                     <main>

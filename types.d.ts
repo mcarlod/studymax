@@ -76,6 +76,7 @@ export interface TextSegment {
 export interface BookCardProps {
     title: string;
     author: string;
+    persona?: string;
     coverURL?: string;
     slug: string;
 }

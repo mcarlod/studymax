@@ -23,29 +23,31 @@ const Transcript: React.FC<TranscriptProps> = ({ messages, currentMessage, curre
 
   if (isEmpty) {
     return (
-      <div className="transcript-container">
-        <div className="transcript-empty">
-          <Mic className="size-12 text-[#212a3b] mb-4" />
-          <h2 className="transcript-empty-text">No conversation yet</h2>
-          <p className="transcript-empty-hint">Click the mic button above to start talking</p>
+      <div className="flex flex-col items-center justify-center min-h-[300px] text-center p-8">
+        <div className="w-20 h-20 rounded-full bg-indigo-600/10 flex items-center justify-center mb-6 border border-indigo-500/10 shadow-sm">
+          <Mic className="size-10 text-indigo-600" />
         </div>
+        <h2 className="text-2xl font-serif font-bold text-slate-900 mb-2">System Ready</h2>
+        <p className="text-slate-500 max-w-xs mx-auto font-medium">Click the control button above to initialize voice communication protocol.</p>
       </div>
     );
   }
 
   return (
-    <div className="transcript-container">
-      <div className="transcript-messages" ref={scrollRef}>
+    <div className="h-[500px] overflow-y-auto scroll-smooth pr-4 custom-scrollbar" ref={scrollRef}>
+      <div className="flex flex-col gap-6">
         {messages.map((msg, index) => (
           <div
             key={index}
-            className={`transcript-message ${
-              msg.role === 'user' ? 'transcript-message-user' : 'transcript-message-assistant'
+            className={`flex ${
+              msg.role === 'user' ? 'justify-end' : 'justify-start'
             }`}
           >
             <div
-              className={`transcript-bubble ${
-                msg.role === 'user' ? 'transcript-bubble-user' : 'transcript-bubble-assistant'
+              className={`max-w-[80%] px-6 py-4 rounded-3xl text-sm md:text-base leading-relaxed shadow-md ${
+                msg.role === 'user' 
+                  ? 'bg-indigo-600 text-white rounded-tr-none' 
+                  : 'bg-white text-slate-700 border border-slate-200 rounded-tl-none font-medium'
               }`}
             >
               {msg.content}
@@ -54,19 +56,19 @@ const Transcript: React.FC<TranscriptProps> = ({ messages, currentMessage, curre
         ))}
 
         {currentUserMessage && (
-          <div className="transcript-message transcript-message-user">
-            <div className="transcript-bubble transcript-bubble-user">
+          <div className="flex justify-end">
+            <div className="max-w-[80%] px-6 py-4 rounded-3xl rounded-tr-none bg-indigo-600 text-white text-sm md:text-base shadow-md relative overflow-hidden">
               {currentUserMessage}
-              <span className="transcript-cursor" />
+              <span className="inline-block w-1.5 h-4 ml-1 bg-white/50 animate-pulse align-middle" />
             </div>
           </div>
         )}
 
         {currentMessage && (
-          <div className="transcript-message transcript-message-assistant">
-            <div className="transcript-bubble transcript-bubble-assistant">
+          <div className="flex justify-start">
+            <div className="max-w-[80%] px-6 py-4 rounded-3xl rounded-tl-none bg-white text-slate-700 border border-slate-200 text-sm md:text-base shadow-md relative overflow-hidden font-medium">
               {currentMessage}
-              <span className="transcript-cursor" />
+              <span className="inline-block w-1.5 h-4 ml-1 bg-indigo-600/50 animate-pulse align-middle" />
             </div>
           </div>
         )}

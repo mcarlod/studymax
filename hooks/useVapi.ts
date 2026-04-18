@@ -296,6 +296,9 @@ export function useVapi(book: IBook) {
 
             await getVapi().start(ASSISTANT_ID, {
                 firstMessage,
+                customer: {
+                    number: userId,
+                },
                 variableValues: {
                     title: book.title,
                     author: book.author,

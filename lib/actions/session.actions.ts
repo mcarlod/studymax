@@ -28,29 +28,25 @@ export const startVoiceSession = async (bookId: string): Promise<StartSessionRes
         let voiceSession: IVoiceSession | undefined;
         try {
             await mongoSession.withTransaction(async () => {
-                // Atomic session reservation inside transaction
+                // Step 1: Ensure the document exists without incrementing
+                await MonthlySessionCounter.findOneAndUpdate(
+                    { clerkId: userId, billingPeriodStart },
+                    { $setOnInsert: { clerkId: userId, billingPeriodStart } },
+                    { upsert: true, session: mongoSession, runValidators: true }
+                );
+
+                // Step 2: Conditional increment with limit check
                 const counter = await MonthlySessionCounter.findOneAndUpdate(
                     {
                         clerkId: userId,
                         billingPeriodStart,
-                        $or: [
-                            { count: { $lt: limits.maxSessionsPerMonth } },
-                            { count: { $exists: false } }
-                        ]
+                        count: { $lt: limits.maxSessionsPerMonth }
                     },
-                    {
-                        $inc: { count: 1 },
-                        $setOnInsert: { clerkId: userId, billingPeriodStart }
-                    },
-                    {
-                        upsert: true,
-                        new: true,
-                        runValidators: true,
-                        session: mongoSession
-                    }
+                    { $inc: { count: 1 } },
+                    { new: true, session: mongoSession, runValidators: true }
                 ).lean();
 
-                if (!counter || counter.count > limits.maxSessionsPerMonth) {
+                if (!counter) {
                     throw new Error('LIMIT_EXCEEDED');
                 }
 
@@ -99,9 +95,16 @@ export const endVoiceSession = async (sessionId: string, durationSeconds: number
             return { success: false, error: 'Unauthorized' };
         }
 
+        const plan = await getUserPlan();
+        const limits = PLAN_LIMITS[plan];
+        const maxDurationSeconds = limits.maxDurationPerSession * 60;
+
         // Validate durationSeconds
-        if (durationSeconds < 0 || durationSeconds > 3600 * 4) { // Max 4 hours per session as safety
-             return { success: false, error: 'Invalid session duration.' };
+        if (durationSeconds < 0 || durationSeconds > maxDurationSeconds) {
+             return { 
+                success: false, 
+                error: `Invalid session duration. Maximum allowed for your ${plan} plan is ${limits.maxDurationPerSession} minutes.` 
+             };
         }
 
         await connectToDatabase();

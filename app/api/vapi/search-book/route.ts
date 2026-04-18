@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { searchBookSegments } from '@/lib/actions/book.actions';
 
 // Helper function to process book search logic
-async function processBookSearch(bookId: unknown, query: unknown) {
+async function processBookSearch(bookId: unknown, query: unknown, userId?: string) {
     // Validate inputs before conversion to prevent null/undefined becoming "null"/"undefined" strings
     if (bookId == null || query == null || query === '') {
         return { result: 'Missing bookId or query' };
@@ -20,7 +20,7 @@ async function processBookSearch(bookId: unknown, query: unknown) {
 
     // Execute search
     console.log(`Executing search for bookId: ${bookIdStr}, queryLength: ${queryStr.length}`);
-    const searchResult = await searchBookSegments(bookIdStr, queryStr, 3);
+    const searchResult = await searchBookSegments(bookIdStr, queryStr, 3, userId);
 
     // Return results
     if (!searchResult.success) {
@@ -59,12 +59,16 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
 
+        // Extract customer number (userId) if provided by Vapi
+        const customerUserId = body?.message?.customer?.number || body?.customer?.number;
+
         // Log request metadata only
         console.log('Vapi search-book request metadata:', {
             type: body?.message?.type,
             role: body?.message?.role,
             toolCallCount: (body?.message?.toolCallList || body?.message?.toolCalls || []).length,
-            functionCall: body?.message?.functionCall?.name
+            functionCall: body?.message?.functionCall?.name,
+            customerUserId
         });
 
         // Support multiple Vapi formats
@@ -84,7 +88,7 @@ export async function POST(request: Request) {
             const parsed = parseArgs(parameters);
 
             if (name === 'searchBook') {
-                const result = await processBookSearch(parsed.bookId, parsed.query);
+                const result = await processBookSearch(parsed.bookId, parsed.query, customerUserId);
                 // Even for single function call, Vapi often expects a results array if it's a tool-call-result message
                 return NextResponse.json({
                     results: [result]
@@ -111,7 +115,7 @@ export async function POST(request: Request) {
             const args = parseArgs(func?.arguments);
 
             if (name === 'searchBook') {
-                const searchResult = await processBookSearch(args.bookId, args.query);
+                const searchResult = await processBookSearch(args.bookId, args.query, customerUserId);
                 results.push({ toolCallId: id, ...searchResult });
             } else {
                 results.push({ toolCallId: id, result: `Unknown function: ${name}` });

@@ -94,7 +94,14 @@ export const checkUserQuota = async () => {
         const limits = PLAN_LIMITS[plan];
         
         const quota = await UserQuota.findOne({ clerkId: userId }).lean();
-        const bookCount = quota ? quota.count : 0;
+        let bookCount = 0;
+        
+        if (quota) {
+            bookCount = quota.count;
+        } else {
+            // Fallback for legacy users
+            bookCount = await Book.countDocuments({ clerkId: userId });
+        }
 
         return {
             allowed: bookCount < limits.maxBooks,
@@ -306,10 +313,16 @@ export const saveBookSegments = async (bookId: string, segments: TextSegment[]) 
 }
 
 // Searches book segments using MongoDB text search with regex fallback
-export const searchBookSegments = async (bookId: string, query: string, limit: number = 5) => {
+export const searchBookSegments = async (bookId: string, query: string, limit: number = 5, userIdOverride?: string) => {
     try {
-        const { userId } = await auth();
-        if (!userId) {
+        let finalUserId: string | null = userIdOverride || null;
+
+        if (!finalUserId) {
+            const { userId: clerkUserId } = await auth();
+            finalUserId = clerkUserId;
+        }
+
+        if (!finalUserId) {
             return { success: false, error: 'Unauthorized', data: [] };
         }
         await connectToDatabase();
@@ -318,7 +331,7 @@ export const searchBookSegments = async (bookId: string, query: string, limit: n
         if (!book) {
             return { success: false, error: 'Book not found', data: [] };
         }
-        if (book.clerkId !== userId) {
+        if (book.clerkId !== finalUserId) {
             return { success: false, error: 'Forbidden', data: [] };
         }
 

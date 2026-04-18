@@ -95,5 +95,5 @@ The voice interface is managed by a custom `useVapi` hook:
 
 ---
 
-## 🎓 Lessons Learned
+## 🎓 What I Learned While Developing This
 This project demonstrates how to orchestrate multiple third-party APIs to build a complex, high-performance AI application. Key takeaways include managing real-time state in React, optimizing database queries for text search, and handling large file uploads efficiently in a serverless environment.

@@ -19,7 +19,7 @@ async function processBookSearch(bookId: unknown, query: unknown) {
     }
 
     // Execute search
-    console.log(`Executing search for bookId: ${bookIdStr}, query: ${queryStr}`);
+    console.log(`Executing search for bookId: ${bookIdStr}, queryLength: ${queryStr.length}`);
     const searchResult = await searchBookSegments(bookIdStr, queryStr, 3);
 
     // Return results
@@ -59,7 +59,13 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
 
-        console.log('Vapi search-book request:', JSON.stringify(body, null, 2));
+        // Log request metadata only
+        console.log('Vapi search-book request metadata:', {
+            type: body?.message?.type,
+            role: body?.message?.role,
+            toolCallCount: (body?.message?.toolCallList || body?.message?.toolCalls || []).length,
+            functionCall: body?.message?.functionCall?.name
+        });
 
         // Support multiple Vapi formats
         const functionCall = body?.message?.functionCall;
@@ -67,7 +73,9 @@ export async function POST(request: Request) {
 
         // Log specific part of the body to see what Vapi is sending
         if (body?.message?.type === 'tool-calls') {
-            console.log('Vapi tool-calls detail:', JSON.stringify(body.message, null, 2));
+            console.log('Vapi tool-calls metadata:', {
+                count: (body.message.toolCallList || body.message.toolCalls || []).length
+            });
         }
 
         // Handle single functionCall format

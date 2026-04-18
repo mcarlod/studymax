@@ -1,5 +1,5 @@
 import {auth} from "@clerk/nextjs/server";
-import {PLAN_LIMITS, PLANS, PlanType} from "@/lib/subscription-constants";
+import {PLAN_LIMITS, PLANS, PlanType, getPlanFromClerk} from "@/lib/subscription-constants";
 
 export const getCurrentBillingPeriodStart = (): Date => {
     const now = new Date();
@@ -11,10 +11,7 @@ export const getUserPlan = async (): Promise<PlanType> => {
 
     if (!userId) return PLANS.FREE;
 
-    if (has({ plan: "pro" })) return PLANS.PRO;
-    if (has({ plan: "standard" })) return PLANS.STANDARD;
-
-    return PLANS.FREE;
+    return getPlanFromClerk(has);
 }
 
 export const getPlanLimits = async () => {

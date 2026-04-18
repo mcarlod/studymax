@@ -8,8 +8,7 @@ import {PLAN_LIMITS, getPlanFromClerk} from "@/lib/subscription-constants";
 import {useAuth} from "@clerk/nextjs";
 
 const VapiControls = ({ book }: { book: IBook }) => {
-    const { has } = useAuth();
-    const { status, isActive, messages, currentMessage, currentUserMessage, duration, start, stop, clearError, limitError } = useVapi(book);
+    const { status, isActive, isStopping, messages, currentMessage, currentUserMessage, duration, maxDurationSeconds, start, stop, clearError, limitError } = useVapi(book);
 
     return (
         <>
@@ -28,7 +27,7 @@ const VapiControls = ({ book }: { book: IBook }) => {
                         <div className="vapi-mic-wrapper">
                             <button
                                 onClick={isActive ? stop : start}
-                                disabled={status === 'connecting'}
+                                disabled={status === 'connecting' || isStopping}
                                 aria-label={isActive ? "Stop voice assistant" : "Start voice assistant"}
                                 title={isActive ? "Stop voice assistant" : "Start voice assistant"}
                                 className={`vapi-mic-btn vapi-mic-btn-inactive shadow-soft ${isActive ? 'vapi-mic-btn-active' : 'vapi-mic-btn-inactive'}`}>
@@ -60,7 +59,7 @@ const VapiControls = ({ book }: { book: IBook }) => {
                             <div className="vapi-status-indicator">
                                 <span className="vapi-status-text">
                                     {Math.floor(duration / 60)}:{String(duration % 60).padStart(2, '0')}/
-                                    {PLAN_LIMITS[getPlanFromClerk(has)].maxDurationPerSession}:00
+                                    {Math.floor(maxDurationSeconds / 60)}:00
                                 </span>
                             </div>
                         </div>

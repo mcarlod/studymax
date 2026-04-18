@@ -83,6 +83,28 @@ export const checkBookExists = async (title: string) => {
     }
 };
 
+export const checkUserQuota = async () => {
+    try {
+        const { userId } = await auth();
+        if (!userId) return { allowed: false, error: 'Unauthorized' };
+
+        await connectToDatabase();
+        const plan = await getUserPlan();
+        const limits = PLAN_LIMITS[plan];
+        const bookCount = await Book.countDocuments({ clerkId: userId });
+
+        return {
+            allowed: bookCount < limits.maxBooks,
+            plan,
+            limit: limits.maxBooks,
+            current: bookCount
+        };
+    } catch (e) {
+        console.error('Error checking user quota:', e);
+        return { allowed: false, error: 'Failed to check quota' };
+    }
+};
+
 export const createBook = async (data: CreateBook) => {
     try {
         const { userId, has } = await auth();
@@ -112,19 +134,31 @@ export const createBook = async (data: CreateBook) => {
         const plan = await getUserPlan();
         const limits = PLAN_LIMITS[plan];
 
-        const bookCount = await Book.countDocuments({ clerkId: userId });
+        // Use a transaction for atomic check and create
+        const session = await mongoose.startSession();
+        let book;
+        try {
+            session.startTransaction();
 
-        if (bookCount >= limits.maxBooks) {
-            revalidatePath("/");
+            const bookCount = await Book.countDocuments({ clerkId: userId }).session(session);
 
-            return {
-                success: false,
-                error: `You have reached the maximum number of books allowed for your ${plan} plan (${limits.maxBooks}). Please upgrade to add more books.`,
-                isBillingError: true,
-            };
+            if (bookCount >= limits.maxBooks) {
+                await session.abortTransaction();
+                return {
+                    success: false,
+                    error: `You have reached the maximum number of books allowed for your ${plan} plan (${limits.maxBooks}). Please upgrade to add more books.`,
+                    isBillingError: true,
+                };
+            }
+
+            [book] = await Book.create([{ ...data, clerkId: userId, slug, totalSegments: 0 }], { session });
+            await session.commitTransaction();
+        } catch (err) {
+            await session.abortTransaction();
+            throw err;
+        } finally {
+            await session.endSession();
         }
-
-        const book = await Book.create({ ...data, clerkId: userId, slug, totalSegments: 0 });
 
         revalidatePath('/');
 

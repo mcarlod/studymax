@@ -296,13 +296,11 @@ export function useVapi(book: IBook) {
 
             await getVapi().start(ASSISTANT_ID, {
                 firstMessage,
-                customer: {
-                    number: userId,
-                },
                 variableValues: {
                     title: book.title,
                     author: book.author,
                     bookId: book._id.toString(),
+                    userId: userId,
                 },
                 voice: {
                     provider: '11labs' as const,

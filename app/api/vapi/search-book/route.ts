@@ -59,8 +59,11 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
 
-        // Extract customer number (userId) if provided by Vapi
-        const customerUserId = body?.message?.customer?.number || body?.customer?.number;
+        // Extract customer number (userId) if provided by Vapi (via customer or variableValues)
+        const customerUserId = body?.message?.customer?.number || 
+                             body?.customer?.number ||
+                             body?.message?.call?.variableValues?.userId ||
+                             body?.call?.variableValues?.userId;
 
         // Log request metadata only
         console.log('Vapi search-book request metadata:', {

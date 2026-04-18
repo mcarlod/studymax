@@ -54,13 +54,14 @@ export const startVoiceSession = async (bookId: string): Promise<StartSessionRes
                     throw new Error('LIMIT_EXCEEDED');
                 }
 
-                [voiceSession] = await VoiceSession.create([{
+                const [newVoiceSession] = await VoiceSession.create([{
                     clerkId: userId,
                     bookId,
                     startedAt: new Date(),
                     billingPeriodStart,
                     durationSeconds: 0,
                 }], { session: mongoSession });
+                voiceSession = newVoiceSession;
             });
         } catch (err: any) {
             if (err.message === 'LIMIT_EXCEEDED') {
@@ -73,6 +74,10 @@ export const startVoiceSession = async (bookId: string): Promise<StartSessionRes
             throw err;
         } finally {
             await mongoSession.endSession();
+        }
+
+        if (!voiceSession) {
+            throw new Error('Failed to create voice session');
         }
 
         return {

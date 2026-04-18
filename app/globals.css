@@ -119,6 +119,13 @@
     --sidebar-border: #e2e8f0;
     --sidebar-ring: #6366f1;
 
+    /* Slate palette */
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+
     /* Brand color */
     --blue: #6366f1;
 
@@ -138,19 +145,34 @@
     --primary: #818cf8;
     --ring: #818cf8;
     --blue: #818cf8;
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: rgba(99, 102, 241, 0.3);
-    }
+
+    /* Slate palette dark mode overrides */
+    --slate-50: #1e293b;
+    --slate-100: #334155;
+    --slate-200: #475569;
+    --slate-500: #94a3b8;
+    --slate-600: #cbd5e1;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.3);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(129, 140, 248, 0.3);
 }
 
 @layer base {
@@ -210,23 +232,68 @@
         @apply !w-full h-14 rounded-2xl bg-indigo-600 cursor-pointer hover:bg-indigo-500 text-xl text-white font-bold transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98];
         font-family: var(--font-bricolage-grotesque), sans-serif;
     }
+    /* ===========================================
+       UPLOAD FORM COMPONENT
+       =========================================== */
     .upload-dropzone {
         @apply relative flex flex-col items-center justify-center p-10 rounded-[2rem] bg-slate-50 border-2 border-dashed border-slate-200 transition-all cursor-pointer hover:bg-white hover:border-indigo-500/50 hover:shadow-lg;
+    }
+    .upload-dropzone--beige {
+        @apply h-[165px] bg-white rounded-[6px] border-[#8B7355]/20;
+        &:hover {
+            @apply bg-gray-50;
+        }
     }
     .upload-dropzone-uploaded {
         @apply border-indigo-500/50 bg-indigo-500/5;
     }
+    .upload-dropzone--beige.upload-dropzone-uploaded {
+        @apply bg-[#f3e4c7] border-[#8B7355]/20;
+    }
     .upload-dropzone-icon {
         @apply w-12 h-12 text-slate-400 mb-4 transition-colors;
+    }
+    .upload-dropzone--beige .upload-dropzone-icon {
+        @apply w-[48px] h-[48px] mb-2 text-[#8B7355];
     }
     .upload-dropzone-text {
         @apply text-lg font-bold text-slate-900 mb-1;
     }
+    .upload-dropzone--beige .upload-dropzone-text {
+        @apply text-[#777] text-lg font-medium text-center mb-0;
+    }
+    .upload-dropzone--beige.upload-dropzone-uploaded .upload-dropzone-text {
+        @apply text-[#663820];
+    }
     .upload-dropzone-hint {
         @apply text-sm text-slate-500;
     }
+    .upload-dropzone--beige .upload-dropzone-hint {
+        @apply text-[#777] text-sm mt-1;
+    }
+    .upload-dropzone--beige.upload-dropzone-uploaded .upload-dropzone-hint {
+        @apply text-[#8B7355];
+    }
     .upload-dropzone-remove {
         @apply absolute -top-2 -right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-400 transition-colors shadow-lg;
+    }
+    .upload-dropzone--beige .upload-dropzone-remove {
+        @apply static w-6 h-6 bg-transparent text-red-500 shadow-none;
+        &:hover {
+            @apply bg-transparent text-red-600;
+        }
+    }
+    /* ===========================================
+       NAVBAR COMPONENT
+       =========================================== */
+    .logo-text {
+        @apply tracking-tighter font-serif text-2xl bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent;
+    }
+    .nav-link-base {
+        @apply text-base font-medium transition-colors;
+    }
+    .nav-link-active {
+        @apply text-indigo-400;
     }
     .nav-btn {
         @apply px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition-all shadow-lg shadow-indigo-500/20;
@@ -234,14 +301,8 @@
     .nav-user-name {
         @apply text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors;
     }
-    .nav-link-base {
-        @apply text-sm font-medium transition-colors;
-    }
-    .nav-link-active {
-        @apply text-indigo-400;
-    }
-    .logo-text {
-        @apply tracking-tighter font-serif text-2xl bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent;
+    .nav-user-link {
+        @apply flex items-center gap-1 hover:opacity-70 transition-opacity;
     }
     .loading-wrapper {
         @apply fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm;
@@ -302,7 +363,7 @@
     /* Button utilities */
     .btn-primary {
         @apply inline-flex items-center justify-center px-6 py-3 bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white font-bold rounded-[10px] transition-colors;
-        font-family: 'IBM Plex Serif', serif;
+        font-family: var(--font-bricolage-grotesque), sans-serif;
     }
     .btn-secondary {
         @apply inline-flex items-center justify-center px-6 py-3 bg-white hover:bg-gray-50 text-[var(--text-secondary)] font-medium rounded-[10px] transition-colors;
@@ -336,27 +397,6 @@
         @apply w-5 h-5;
     }
 
-    /* ===========================================
-       NAVBAR COMPONENT
-       =========================================== */
-    .logo-text {
-        @apply font-semibold text-xl hidden sm:block text-black;
-    }
-    .nav-link-base {
-        @apply text-base font-medium leading-6 transition-all;
-    }
-    .nav-link-active {
-        @apply text-[var(--color-brand)] border-b-2 border-[var(--color-brand)] pb-0.5;
-    }
-    .nav-btn {
-        @apply text-base font-medium text-black hover:opacity-70 transition-opacity cursor-pointer;
-    }
-    .nav-user-link {
-        @apply flex items-center gap-1 hover:opacity-70 transition-opacity;
-    }
-    .nav-user-name {
-        @apply hidden sm:inline text-base font-medium text-black;
-    }
 
     /* ===========================================
        BANNER/ALERT COMPONENTS
@@ -707,42 +747,6 @@
         @apply text-sm md:text-base font-medium text-[#3d485e] line-clamp-1;
     }
 
-    /* ===========================================
-       UPLOAD FORM COMPONENT
-       =========================================== */
-    .upload-dropzone {
-        @apply flex flex-col items-center justify-center h-[165px] bg-white rounded-[6px] cursor-pointer transition-all;
-
-        &:hover {
-            @apply bg-gray-50;
-        }
-    }
-    .upload-dropzone-uploaded {
-        @apply bg-[#f3e4c7];
-
-        .upload-dropzone-text {
-            @apply text-[#663820];
-        }
-        .upload-dropzone-hint {
-            @apply text-[#8B7355];
-        }
-    }
-    .upload-dropzone-icon {
-        @apply w-[48px] h-[48px] mb-2 text-[#8B7355];
-    }
-    .upload-dropzone-text {
-        @apply text-[#777] text-lg font-medium text-center;
-    }
-    .upload-dropzone-hint {
-        @apply text-[#777] text-sm mt-1;
-    }
-    .upload-dropzone-remove {
-        @apply flex items-center justify-center w-6 h-6 text-red-500 transition-colors cursor-pointer;
-
-        &:hover {
-            @apply text-red-600;
-        }
-    }
     .form-label {
         @apply text-lg font-medium text-black mb-2 block;
     }

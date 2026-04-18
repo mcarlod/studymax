@@ -191,7 +191,19 @@ export const saveBookSegments = async (bookId: string, segments: TextSegment[]) 
 // Searches book segments using MongoDB text search with regex fallback
 export const searchBookSegments = async (bookId: string, query: string, limit: number = 5) => {
     try {
+        const { userId } = await auth();
+        if (!userId) {
+            return { success: false, error: 'Unauthorized', data: [] };
+        }
         await connectToDatabase();
+
+        const book = await Book.findById(bookId).select('clerkId').lean();
+        if (!book) {
+            return { success: false, error: 'Book not found', data: [] };
+        }
+        if (book.clerkId !== userId) {
+            return { success: false, error: 'Forbidden', data: [] };
+        }
 
         console.log(`Searching for book segments`, {
             bookId,

@@ -1,6 +1,6 @@
 'use server';
 
-import {EndSessionResult, StartSessionResult} from "@/types";
+import {EndSessionResult, StartSessionResult, IVoiceSession} from "@/types";
 import {connectToDatabase} from "@/database/mongoose";
 import VoiceSession from "@/database/models/voice-session.model";
 import MonthlySessionCounter from "@/database/models/monthly-session-counter.model";
@@ -25,7 +25,7 @@ export const startVoiceSession = async (bookId: string): Promise<StartSessionRes
         const limits = PLAN_LIMITS[plan];
 
         const mongoSession = await mongoose.startSession();
-        let voiceSession;
+        let voiceSession: IVoiceSession | undefined;
         try {
             await mongoSession.withTransaction(async () => {
                 // Atomic session reservation inside transaction

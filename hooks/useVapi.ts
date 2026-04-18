@@ -18,6 +18,7 @@ const useLatestRef = <T>(value: T) => {
 }
 
 const VAPI_API_KEY = process.env.NEXT_PUBLIC_VAPI_API_KEY;
+
 const TIMER_INTERVAL_MS = 1000;
 const SECONDS_PER_MINUTE = 60;
 const TIME_WARNING_THRESHOLD = 60;

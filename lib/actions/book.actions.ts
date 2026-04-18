@@ -38,11 +38,22 @@ export const getBookBySlug = async (slug: string) => {
     }
 }
 
-export const getAllBooks = async () => {
+export const getAllBooks = async (query?: string) => {
     try {
         await connectToDatabase();
 
-        const books = await Book.find().sort({ createdAt: -1 }).lean();
+        let filter = {};
+        if (query) {
+            const regex = new RegExp(query, 'i');
+            filter = {
+                $or: [
+                    { title: { $regex: regex } },
+                    { author: { $regex: regex } }
+                ]
+            };
+        }
+
+        const books = await Book.find(filter).sort({ createdAt: -1 }).lean();
 
         return {
             success: true,

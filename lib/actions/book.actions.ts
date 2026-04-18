@@ -5,9 +5,11 @@ import {connectToDatabase} from "@/database/mongoose";
 import {escapeRegex, generateSlug, serializeData} from "@/lib/utils";
 import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/book-segment.model";
-import {auth} from "@clerk/nextjs/server";
+import {getPlanLimits, getUserPlan} from "@/lib/subscription.server";
+import {PLAN_LIMITS} from "@/lib/subscription-constants";
 import mongoose from "mongoose";
 import {revalidatePath} from "next/cache";
+import {auth} from "@clerk/nextjs/server";
 
 export const getBookBySlug = async (slug: string) => {
     try {
@@ -83,7 +85,7 @@ export const checkBookExists = async (title: string) => {
 
 export const createBook = async (data: CreateBook) => {
     try {
-        const { userId } = await auth();
+        const { userId, has } = await auth();
 
         if (!userId) {
             return {
@@ -106,7 +108,21 @@ export const createBook = async (data: CreateBook) => {
             }
         }
 
-        // Todo: Check subscription limits before creating a book
+        // Check subscription limits before creating a book
+        const plan = await getUserPlan();
+        const limits = PLAN_LIMITS[plan];
+
+        const bookCount = await Book.countDocuments({ clerkId: userId });
+
+        if (bookCount >= limits.maxBooks) {
+            revalidatePath("/");
+
+            return {
+                success: false,
+                error: `You have reached the maximum number of books allowed for your ${plan} plan (${limits.maxBooks}). Please upgrade to add more books.`,
+                isBillingError: true,
+            };
+        }
 
         const book = await Book.create({ ...data, clerkId: userId, slug, totalSegments: 0 });
 
@@ -233,7 +249,7 @@ export const searchBookSegments = async (bookId: string, query: string, limit: n
             const keywords = query.split(/\s+/).filter((k) => k.length > 2);
             if (keywords.length === 0) {
                 return {
-                    success: false,
+                    success: true,
                     data: []
                 }
             }

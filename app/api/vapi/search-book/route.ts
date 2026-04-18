@@ -19,12 +19,21 @@ async function processBookSearch(bookId: unknown, query: unknown) {
     }
 
     // Execute search
+    console.log(`Executing search for bookId: ${bookIdStr}, query: ${queryStr}`);
     const searchResult = await searchBookSegments(bookIdStr, queryStr, 3);
 
     // Return results
-    if (!searchResult.success || !searchResult.data?.length) {
+    if (!searchResult.success) {
+        console.error('searchBookSegments failed:', searchResult.error);
+        return { result: 'Error searching the book content.' };
+    }
+
+    if (!searchResult.data?.length) {
+        console.log('No segments found for query');
         return { result: 'No information found about this topic in the book.' };
     }
+
+    console.log(`Found ${searchResult.data.length} segments`);
 
     const combinedText = searchResult.data
         .map((segment) => (segment as { content: string }).content)
@@ -55,6 +64,11 @@ export async function POST(request: Request) {
         // Support multiple Vapi formats
         const functionCall = body?.message?.functionCall;
         const toolCallList = body?.message?.toolCallList || body?.message?.toolCalls;
+
+        // Log specific part of the body to see what Vapi is sending
+        if (body?.message?.type === 'tool-calls') {
+            console.log('Vapi tool-calls detail:', JSON.stringify(body.message, null, 2));
+        }
 
         // Handle single functionCall format
         if (functionCall) {

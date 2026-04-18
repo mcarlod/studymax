@@ -5,7 +5,8 @@ import {ASSISTANT_ID, DEFAULT_VOICE, VOICE_SETTINGS} from "@/lib/constants";
 import {startVoiceSession, endVoiceSession} from "@/lib/actions/session.actions";
 import Vapi from '@vapi-ai/web';
 import {getVoice} from "@/lib/utils";
-import {useSubscription} from "@clerk/react/experimental";
+import {PLAN_LIMITS, getPlanFromClerk} from "@/lib/subscription-constants";
+import {useRouter} from "next/navigation";
 
 export type CallStatus = 'idle' | 'connecting' | 'starting' | 'listening' | 'thinking' | 'speaking';
 
@@ -40,7 +41,11 @@ function getVapi() {
 }
 
 export function useVapi(book: IBook) {
-    const { userId } = useAuth();
+    const { userId, has } = useAuth();
+    const router = useRouter();
+
+    const plan = getPlanFromClerk(has);
+    const limits = PLAN_LIMITS[plan];
 
     const [status, setStatus] = useState<CallStatus>('idle');
     const [messages, setMessages] = useState<Messages[]>([]);
@@ -55,10 +60,26 @@ export function useVapi(book: IBook) {
     const sessionIdRef = useRef<string | null>(null);
     const isStoppingRef = useRef(false);
 
+    // Finalize session exactly once
+    const finalizeVoiceSession = useCallback(async (durationSeconds: number) => {
+        const sessionId = sessionIdRef.current;
+        if (!sessionId) return;
+        
+        sessionIdRef.current = null; // Mark as handled
+        console.log("Finalizing voice session:", sessionId, "duration:", durationSeconds);
+        
+        try {
+            await endVoiceSession(sessionId, durationSeconds);
+        } catch (err) {
+            console.error('Failed to end voice session:', err);
+        }
+    }, []);
+
     // Keep refs in sync with latest values for use in callbacks
-    //const maxDurationSeconds = limits?.maxDurationPerSession ? limits.maxDurationPerSession * 60 : (15 * 60);
-    //const maxDurationRef = useLatestRef(maxDurationSeconds);
+    const maxDurationSeconds = limits.maxDurationPerSession * 60;
+    const maxDurationRef = useLatestRef(maxDurationSeconds);
     const durationRef = useLatestRef(duration);
+    const finalizeRef = useLatestRef(finalizeVoiceSession);
     const voice = book.persona || DEFAULT_VOICE;
 
     console.log("VAPI KEY:", VAPI_API_KEY);
@@ -66,6 +87,11 @@ export function useVapi(book: IBook) {
 
     // Set up Vapi event listeners
     useEffect(() => {
+        const currentDurationRef = durationRef;
+        const currentMaxDurationRef = maxDurationRef;
+
+        console.log("Registering Vapi handlers");
+
         const handlers = {
             'call-start': () => {
                 isStoppingRef.current = false;
@@ -82,14 +108,24 @@ export function useVapi(book: IBook) {
                         setDuration(newDuration);
 
                         // Check duration limit
-                       // if (newDuration >= maxDurationRef.current) {
-                        //    getVapi().stop();
-                        //    setLimitError(
-                        //        `Session time limit (${Math.floor(
-                        //            maxDurationRef.current / SECONDS_PER_MINUTE,
-                         //       )} minutes) reached. Upgrade your plan for longer sessions.`,
-                         //   );
-                        //}
+                        if (newDuration >= currentMaxDurationRef.current) {
+                            if (!isStoppingRef.current) {
+                                isStoppingRef.current = true;
+                                if (timerRef.current) {
+                                    clearInterval(timerRef.current);
+                                    timerRef.current = null;
+                                }
+                                getVapi().stop();
+                                setLimitError(
+                                    `Session time limit (${Math.floor(
+                                        currentMaxDurationRef.current / SECONDS_PER_MINUTE,
+                                    )} minutes) reached. Redirecting to home...`,
+                                );
+                                setTimeout(() => {
+                                    router.push('/');
+                                }, 3000);
+                            }
+                        }
                     }
                 }, TIMER_INTERVAL_MS);
             },
@@ -107,12 +143,7 @@ export function useVapi(book: IBook) {
                 }
 
                 // End session tracking
-                if (sessionIdRef.current) {
-                    endVoiceSession(sessionIdRef.current, durationRef.current).catch((err) =>
-                        console.error('Failed to end voice session:', err),
-                    );
-                    sessionIdRef.current = null;
-                }
+                finalizeRef.current(currentDurationRef.current);
 
                 startTimeRef.current = null;
             },
@@ -124,55 +155,65 @@ export function useVapi(book: IBook) {
             },
             'speech-end': () => {
                 if (!isStoppingRef.current) {
-                    // After AI finishes speaking, user can talk
+                    // After AI finishes speaking, we check if it's because it's waiting for a tool or if it's done.
+                    // If it was speaking and now stopped, it might be listening to the user.
+                    // But if it just said "let me check", it will move to 'thinking' soon.
+                    // For now, we set it to listening, but the message handler will override it if thinking starts.
                     setStatus('listening');
                 }
             },
 
-            message: (message: {
-                type: string;
-                role: string;
-                transcriptType: string;
-                transcript: string;
-            }) => {
-                if (message.type !== 'transcript') return;
+            message: (message: any) => {
+                // Handle different message types from Vapi
+                if (message.type === 'transcript') {
+                    // User finished speaking → AI is thinking
+                    if (message.role === 'user' && message.transcriptType === 'final') {
+                        if (!isStoppingRef.current) {
+                            setStatus('thinking');
+                        }
+                        setCurrentUserMessage('');
+                    }
 
-                // User finished speaking → AI is thinking
-                if (message.role === 'user' && message.transcriptType === 'final') {
+                    // Partial user transcript → show real-time typing
+                    if (message.role === 'user' && message.transcriptType === 'partial') {
+                        setCurrentUserMessage(message.transcript);
+                        return;
+                    }
+
+                    // Partial AI transcript → show word-by-word
+                    if (message.role === 'assistant' && message.transcriptType === 'partial') {
+                        setCurrentMessage(message.transcript);
+                        return;
+                    }
+
+                    // Final transcript → add to messages
+                    if (message.transcriptType === 'final') {
+                        if (message.role === 'assistant') setCurrentMessage('');
+                        if (message.role === 'user') setCurrentUserMessage('');
+
+                        setMessages((prev) => {
+                            const lastMessage = prev[prev.length - 1];
+                            const isDupe = lastMessage && lastMessage.role === message.role && lastMessage.content === message.transcript;
+                            return isDupe ? prev : [...prev, { role: message.role, content: message.transcript }];
+                        });
+                    }
+                }
+
+                // AI is calling a tool → thinking
+                if (message.type === 'tool-calls') {
                     if (!isStoppingRef.current) {
                         setStatus('thinking');
                     }
-                    setCurrentUserMessage('');
-                }
-
-                // Partial user transcript → show real-time typing
-                if (message.role === 'user' && message.transcriptType === 'partial') {
-                    setCurrentUserMessage(message.transcript);
-                    return;
-                }
-
-                // Partial AI transcript → show word-by-word
-                if (message.role === 'assistant' && message.transcriptType === 'partial') {
-                    setCurrentMessage(message.transcript);
-                    return;
-                }
-
-                // Final transcript → add to messages
-                if (message.transcriptType === 'final') {
-                    if (message.role === 'assistant') setCurrentMessage('');
-                    if (message.role === 'user') setCurrentUserMessage('');
-
-                    setMessages((prev) => {
-                        const isDupe = prev.some(
-                            (m) => m.role === message.role && m.content === message.transcript,
-                        );
-                        return isDupe ? prev : [...prev, { role: message.role, content: message.transcript }];
-                    });
                 }
             },
 
-            error: (error: Error) => {
-                console.error('Vapi error:', error);
+            error: (error: any) => {
+                console.error('Vapi error detail:', {
+                    message: error.message,
+                    name: error.name,
+                    stack: error.stack,
+                    ...error
+                });
                 // Don't reset isStoppingRef here - delayed events may still fire
                 setStatus('idle');
                 setCurrentMessage('');
@@ -212,13 +253,11 @@ export function useVapi(book: IBook) {
         });
 
         return () => {
+            console.log("Cleaning up Vapi handlers");
             // End active session on unmount
             if (sessionIdRef.current) {
                 getVapi().stop();
-                endVoiceSession(sessionIdRef.current, durationRef.current).catch((err) =>
-                    console.error('Failed to end voice session on unmount:', err),
-                );
-                sessionIdRef.current = null;
+                finalizeRef.current(currentDurationRef.current);
             }
             // Cleanup handlers
             Object.entries(handlers).forEach(([event, handler]) => {
@@ -226,7 +265,7 @@ export function useVapi(book: IBook) {
             });
             if (timerRef.current) clearInterval(timerRef.current);
         };
-    }, []);
+    }, [book.title, book.author, book._id, voice, durationRef, maxDurationRef]);
 
     const start = useCallback(async () => {
         if (!userId) {
@@ -240,7 +279,7 @@ export function useVapi(book: IBook) {
 
         try {
             // Check session limits and create session record
-            const result = await startVoiceSession(userId, book._id);
+            const result = await startVoiceSession(book._id);
 
             if (!result.success) {
                 setLimitError(result.error || 'Session limit reached. Please upgrade your plan.');
@@ -260,7 +299,8 @@ export function useVapi(book: IBook) {
                 variableValues: {
                     title: book.title,
                     author: book.author,
-                    bookId: book._id,
+                    bookId: book._id.toString(),
+                    userId: userId,
                 },
                 voice: {
                     provider: '11labs' as const,
@@ -274,10 +314,7 @@ export function useVapi(book: IBook) {
             });
         } catch (err) {
             console.error('Failed to start call:', err);
-            if (sessionIdRef.current) {
-                endVoiceSession(sessionIdRef.current, 0).catch((err) => console.error('Failed to rollback voice session after start failure:', err));
-                sessionIdRef.current = null;
-            }
+            finalizeRef.current(0);
             setStatus('idle');
             setLimitError('Failed to start voice session. Please try again.');
         }
@@ -300,10 +337,11 @@ export function useVapi(book: IBook) {
         status === 'speaking';
 
     // Calculate remaining time
-    // const maxDurationSeconds = limits.maxSessionMinutes * SECONDS_PER_MINUTE;
-    // const remainingSeconds = Math.max(0, maxDurationSeconds - duration);
-    // const showTimeWarning =
-    //     isActive && remainingSeconds <= TIME_WARNING_THRESHOLD && remainingSeconds > 0;
+    const remainingSeconds = Math.max(0, maxDurationSeconds - duration);
+    const showTimeWarning =
+        isActive && remainingSeconds <= TIME_WARNING_THRESHOLD && remainingSeconds > 0;
+
+    console.log("Vapi state:", { status, messagesCount: messages.length, duration });
 
     return {
         status,
@@ -317,9 +355,10 @@ export function useVapi(book: IBook) {
         limitError,
         isBillingError,
         clearError,
-        // maxDurationSeconds,
-        // remainingSeconds,
-        // showTimeWarning,
+        maxDurationSeconds,
+        remainingSeconds,
+        showTimeWarning,
+        isStopping: isStoppingRef.current,
     };
 }
 

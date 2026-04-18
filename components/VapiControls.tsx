@@ -4,9 +4,11 @@ import useVapi from "@/hooks/useVapi";
 import {IBook} from "@/types";
 import Image from "next/image";
 import Transcript from "@/components/Transcript";
+import {PLAN_LIMITS, getPlanFromClerk} from "@/lib/subscription-constants";
+import {useAuth} from "@clerk/nextjs";
 
 const VapiControls = ({ book }: { book: IBook }) => {
-    const { status, isActive, messages, currentMessage, currentUserMessage, duration, start, stop, clearError } = useVapi(book);
+    const { status, isActive, isStopping, messages, currentMessage, currentUserMessage, duration, maxDurationSeconds, start, stop, clearError, limitError } = useVapi(book);
 
     return (
         <>
@@ -25,7 +27,7 @@ const VapiControls = ({ book }: { book: IBook }) => {
                         <div className="vapi-mic-wrapper">
                             <button
                                 onClick={isActive ? stop : start}
-                                disabled={status === 'connecting'}
+                                disabled={status === 'connecting' || isStopping}
                                 aria-label={isActive ? "Stop voice assistant" : "Start voice assistant"}
                                 title={isActive ? "Stop voice assistant" : "Start voice assistant"}
                                 className={`vapi-mic-btn vapi-mic-btn-inactive shadow-soft ${isActive ? 'vapi-mic-btn-active' : 'vapi-mic-btn-inactive'}`}>
@@ -48,20 +50,28 @@ const VapiControls = ({ book }: { book: IBook }) => {
 
                         <div className="flex flex-wrap gap-2">
                             <div className="vapi-status-indicator">
-                                <span className="vapi-status-dot vapi-status-dot-ready"></span>
-                                <span className="vapi-status-text">Ready</span>
+                                <span className={`vapi-status-dot vapi-status-dot-${status}`}></span>
+                                <span className="vapi-status-text capitalize">{status}</span>
                             </div>
                             <div className="vapi-status-indicator">
                                 <span className="vapi-status-text">Voice: {book.persona || "Default"}</span>
                             </div>
                             <div className="vapi-status-indicator">
-                                <span className="vapi-status-text">0:00/15:00</span>
+                                <span className="vapi-status-text">
+                                    {Math.floor(duration / 60)}:{String(duration % 60).padStart(2, '0')}/
+                                    {Math.floor(maxDurationSeconds / 60)}:00
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="vapi-transcript-wrapper">
+                    {limitError && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                            <span className="block sm:inline">{limitError}</span>
+                        </div>
+                    )}
                     <Transcript
                         messages={messages}
                         currentMessage={currentMessage}

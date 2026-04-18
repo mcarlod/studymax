@@ -5,9 +5,12 @@ import {connectToDatabase} from "@/database/mongoose";
 import {escapeRegex, generateSlug, serializeData} from "@/lib/utils";
 import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/book-segment.model";
-import {auth} from "@clerk/nextjs/server";
+import UserQuota from "@/database/models/user-quota.model";
+import {getPlanLimits, getUserPlan} from "@/lib/subscription.server";
+import {PLAN_LIMITS} from "@/lib/subscription-constants";
 import mongoose from "mongoose";
 import {revalidatePath} from "next/cache";
+import {auth} from "@clerk/nextjs/server";
 
 export const getBookBySlug = async (slug: string) => {
     try {
@@ -35,11 +38,22 @@ export const getBookBySlug = async (slug: string) => {
     }
 }
 
-export const getAllBooks = async () => {
+export const getAllBooks = async (query?: string) => {
     try {
         await connectToDatabase();
 
-        const books = await Book.find().sort({ createdAt: -1 }).lean();
+        let filter = {};
+        if (query) {
+            const regex = new RegExp(query, 'i');
+            filter = {
+                $or: [
+                    { title: { $regex: regex } },
+                    { author: { $regex: regex } }
+                ]
+            };
+        }
+
+        const books = await Book.find(filter).sort({ createdAt: -1 }).lean();
 
         return {
             success: true,
@@ -81,9 +95,40 @@ export const checkBookExists = async (title: string) => {
     }
 };
 
-export const createBook = async (data: CreateBook) => {
+export const checkUserQuota = async () => {
     try {
         const { userId } = await auth();
+        if (!userId) return { allowed: false, error: 'Unauthorized' };
+
+        await connectToDatabase();
+        const plan = await getUserPlan();
+        const limits = PLAN_LIMITS[plan];
+        
+        const quota = await UserQuota.findOne({ clerkId: userId }).lean();
+        let bookCount = 0;
+        
+        if (quota) {
+            bookCount = quota.count;
+        } else {
+            // Fallback for legacy users
+            bookCount = await Book.countDocuments({ clerkId: userId });
+        }
+
+        return {
+            allowed: bookCount < limits.maxBooks,
+            plan,
+            limit: limits.maxBooks,
+            current: bookCount
+        };
+    } catch (e) {
+        console.error('Error checking user quota:', e);
+        return { allowed: false, error: 'Failed to check quota' };
+    }
+};
+
+export const createBook = async (data: CreateBook) => {
+    try {
+        const { userId, has } = await auth();
 
         if (!userId) {
             return {
@@ -106,9 +151,99 @@ export const createBook = async (data: CreateBook) => {
             }
         }
 
-        // Todo: Check subscription limits before creating a book
+        // Check subscription limits before creating a book
+        const plan = await getUserPlan();
+        const limits = PLAN_LIMITS[plan];
 
-        const book = await Book.create({ ...data, clerkId: userId, slug, totalSegments: 0 });
+        // Use a transaction for atomic check and create
+        const session = await mongoose.startSession();
+        let book;
+        try {
+            session.startTransaction();
+
+            // Check if quota needs initialization
+            let quota = await UserQuota.findOne({ clerkId: userId }).session(session);
+            
+            if (!quota) {
+                const bookCount = await Book.countDocuments({ clerkId: userId }).session(session);
+                [quota] = await UserQuota.create([{ clerkId: userId, count: bookCount }], { session });
+            }
+
+            // Atomic increment with limit check
+            const updatedQuota = await UserQuota.findOneAndUpdate(
+                {
+                    clerkId: userId,
+                    count: { $lt: limits.maxBooks }
+                },
+                { $inc: { count: 1 } },
+                { session, new: true }
+            );
+
+            if (!updatedQuota) {
+                await session.abortTransaction();
+                return {
+                    success: false,
+                    error: `You have reached the maximum number of books allowed for your ${plan} plan (${limits.maxBooks}). Please upgrade to add more books.`,
+                    isBillingError: true,
+                };
+            }
+
+            [book] = await Book.create([{ ...data, clerkId: userId, slug, totalSegments: 0 }], { session });
+            await session.commitTransaction();
+        } catch (err: any) {
+            await session.abortTransaction();
+            
+            // Handle duplicate key error (E11000)
+            if (err.code === 11000) {
+                const isUserQuotaRace = err.message?.includes('userquotas') || 
+                                       err.keyPattern?.clerkId;
+                
+                if (isUserQuotaRace) {
+                    // Start a fresh session/transaction for the retry
+                    const retrySession = await mongoose.startSession();
+                    try {
+                        let retryResult;
+                        await retrySession.withTransaction(async () => {
+                            const q = await UserQuota.findOneAndUpdate(
+                                { clerkId: userId, count: { $lt: limits.maxBooks } },
+                                { $inc: { count: 1 } },
+                                { session: retrySession, new: true }
+                            );
+
+                            if (!q) {
+                                throw new Error('QUOTA_EXCEEDED');
+                            }
+
+                            const [newBook] = await Book.create([{ ...data, clerkId: userId, slug, totalSegments: 0 }], { session: retrySession });
+                            retryResult = newBook;
+                        });
+                        
+                        if (retryResult) {
+                            revalidatePath('/');
+                            return {
+                                success: true,
+                                data: serializeData(retryResult),
+                            };
+                        }
+                    } catch (retryErr: any) {
+                        if (retryErr.message === 'QUOTA_EXCEEDED') {
+                            return {
+                                success: false,
+                                error: `You have reached the maximum number of books allowed for your ${plan} plan (${limits.maxBooks}). Please upgrade to add more books.`,
+                                isBillingError: true,
+                            };
+                        }
+                        // If it's another 11000 (e.g. Book slug), let it fall through or throw
+                        throw retryErr;
+                    } finally {
+                        await retrySession.endSession();
+                    }
+                }
+            }
+            throw err;
+        } finally {
+            await session.endSession();
+        }
 
         revalidatePath('/');
 
@@ -189,10 +324,16 @@ export const saveBookSegments = async (bookId: string, segments: TextSegment[]) 
 }
 
 // Searches book segments using MongoDB text search with regex fallback
-export const searchBookSegments = async (bookId: string, query: string, limit: number = 5) => {
+export const searchBookSegments = async (bookId: string, query: string, limit: number = 5, userIdOverride?: string) => {
     try {
-        const { userId } = await auth();
-        if (!userId) {
+        let finalUserId: string | null = userIdOverride || null;
+
+        if (!finalUserId) {
+            const { userId: clerkUserId } = await auth();
+            finalUserId = clerkUserId;
+        }
+
+        if (!finalUserId) {
             return { success: false, error: 'Unauthorized', data: [] };
         }
         await connectToDatabase();
@@ -201,7 +342,7 @@ export const searchBookSegments = async (bookId: string, query: string, limit: n
         if (!book) {
             return { success: false, error: 'Book not found', data: [] };
         }
-        if (book.clerkId !== userId) {
+        if (book.clerkId !== finalUserId) {
             return { success: false, error: 'Forbidden', data: [] };
         }
 
@@ -233,7 +374,7 @@ export const searchBookSegments = async (bookId: string, query: string, limit: n
             const keywords = query.split(/\s+/).filter((k) => k.length > 2);
             if (keywords.length === 0) {
                 return {
-                    success: false,
+                    success: true,
                     data: []
                 }
             }

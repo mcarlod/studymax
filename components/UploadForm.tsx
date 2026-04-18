@@ -15,7 +15,7 @@ import VoiceSelector from './VoiceSelector';
 import LoadingOverlay from './LoadingOverlay';
 import {useAuth, useUser} from "@clerk/nextjs";
 import { toast } from 'sonner';
-import {checkBookExists, createBook, saveBookSegments} from "@/lib/actions/book.actions";
+import {checkBookExists, checkUserQuota, createBook, saveBookSegments} from "@/lib/actions/book.actions";
 import {useRouter} from "next/navigation";
 import {parsePDFFile} from "@/lib/utils";
 import {upload} from "@vercel/blob/client";
@@ -57,6 +57,17 @@ const UploadForm = () => {
                 toast.info("Book with same title already exists.");
                 form.reset()
                 router.push(`/books/${existsCheck.book.slug}`)
+                setIsSubmitting(false);
+                return;
+            }
+
+            const quotaCheck = await checkUserQuota();
+            if (!quotaCheck.allowed) {
+                const errorMessage = (quotaCheck.plan && quotaCheck.limit)
+                    ? `You have reached the maximum number of books allowed for your ${quotaCheck.plan} plan (${quotaCheck.limit}). Please upgrade for more.`
+                    : "You have reached your book upload limit or there was an error checking your quota. Please try again later.";
+                toast.error(errorMessage);
+                setIsSubmitting(false);
                 return;
             }
 
@@ -112,7 +123,13 @@ const UploadForm = () => {
                 fileSize: pdfFile.size,
             });
 
-            if(!book.success) throw new Error( "Failed to create book");
+            if(!book.success) {
+                toast.error(book.error as string || "Failed to create book");
+                if (book.isBillingError) {
+                    router.push("/subscriptions")
+                }
+                return;
+            }
 
             if(book.alreadyExists) {
                 toast.info("Book with same title already exists.");

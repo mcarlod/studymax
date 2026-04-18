@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { searchBookSegments } from '@/lib/actions/book.actions';
 
 // Helper function to process book search logic
-async function processBookSearch(bookId: unknown, query: unknown) {
+async function processBookSearch(bookId: unknown, query: unknown, userId?: string) {
     // Validate inputs before conversion to prevent null/undefined becoming "null"/"undefined" strings
     if (bookId == null || query == null || query === '') {
         return { result: 'Missing bookId or query' };
@@ -19,12 +19,21 @@ async function processBookSearch(bookId: unknown, query: unknown) {
     }
 
     // Execute search
-    const searchResult = await searchBookSegments(bookIdStr, queryStr, 3);
+    console.log(`Executing search for bookId: ${bookIdStr}, queryLength: ${queryStr.length}`);
+    const searchResult = await searchBookSegments(bookIdStr, queryStr, 3, userId);
 
     // Return results
-    if (!searchResult.success || !searchResult.data?.length) {
-        return { result: 'No information found about this topic in the book.' };
+    if (!searchResult.success) {
+        console.error('searchBookSegments failed:', searchResult.error);
+        return { result: 'Error searching the book content.' };
     }
+
+    if (!searchResult.data?.length) {
+        console.log('No segments found for query');
+        return { result: 'no information found about this topic' };
+    }
+
+    console.log(`Found ${searchResult.data.length} segments`);
 
     const combinedText = searchResult.data
         .map((segment) => (segment as { content: string }).content)
@@ -50,11 +59,31 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
 
-        console.log('Vapi search-book request:', JSON.stringify(body, null, 2));
+        // Extract customer number (userId) if provided by Vapi (via customer or variableValues)
+        const customerUserId = body?.message?.customer?.number || 
+                             body?.customer?.number ||
+                             body?.message?.call?.variableValues?.userId ||
+                             body?.call?.variableValues?.userId;
+
+        // Log request metadata only
+        console.log('Vapi search-book request metadata:', {
+            type: body?.message?.type,
+            role: body?.message?.role,
+            toolCallCount: (body?.message?.toolCallList || body?.message?.toolCalls || []).length,
+            functionCall: body?.message?.functionCall?.name,
+            customerUserId
+        });
 
         // Support multiple Vapi formats
         const functionCall = body?.message?.functionCall;
         const toolCallList = body?.message?.toolCallList || body?.message?.toolCalls;
+
+        // Log specific part of the body to see what Vapi is sending
+        if (body?.message?.type === 'tool-calls') {
+            console.log('Vapi tool-calls metadata:', {
+                count: (body.message.toolCallList || body.message.toolCalls || []).length
+            });
+        }
 
         // Handle single functionCall format
         if (functionCall) {
@@ -62,11 +91,16 @@ export async function POST(request: Request) {
             const parsed = parseArgs(parameters);
 
             if (name === 'searchBook') {
-                const result = await processBookSearch(parsed.bookId, parsed.query);
-                return NextResponse.json(result);
+                const result = await processBookSearch(parsed.bookId, parsed.query, customerUserId);
+                // Even for single function call, Vapi often expects a results array if it's a tool-call-result message
+                return NextResponse.json({
+                    results: [result]
+                });
             }
 
-            return NextResponse.json({ result: `Unknown function: ${name}` });
+            return NextResponse.json({
+                results: [{ result: `Unknown function: ${name}` }]
+            });
         }
 
         // Handle toolCallList format (array of calls)
@@ -84,7 +118,7 @@ export async function POST(request: Request) {
             const args = parseArgs(func?.arguments);
 
             if (name === 'searchBook') {
-                const searchResult = await processBookSearch(args.bookId, args.query);
+                const searchResult = await processBookSearch(args.bookId, args.query, customerUserId);
                 results.push({ toolCallId: id, ...searchResult });
             } else {
                 results.push({ toolCallId: id, result: `Unknown function: ${name}` });

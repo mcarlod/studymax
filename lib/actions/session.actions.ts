@@ -7,6 +7,7 @@ import MonthlySessionCounter from "@/database/models/monthly-session-counter.mod
 import {getCurrentBillingPeriodStart, getUserPlan} from "@/lib/subscription.server";
 import {PLAN_LIMITS} from "@/lib/subscription-constants";
 import {auth} from "@clerk/nextjs/server";
+import mongoose from "mongoose";
 
 export const startVoiceSession = async (providedClerkId: string, bookId: string): Promise<StartSessionResult> => {
     try {
@@ -24,25 +25,43 @@ export const startVoiceSession = async (providedClerkId: string, bookId: string)
         const limits = PLAN_LIMITS[plan];
 
         // Atomic session reservation
-        const counter = await MonthlySessionCounter.findOneAndUpdate(
-            {
-                clerkId: userId,
-                billingPeriodStart,
-                $or: [
-                    { count: { $lt: limits.maxSessionsPerMonth } },
-                    { count: { $exists: false } }
-                ]
-            },
-            {
-                $inc: { count: 1 },
-                $setOnInsert: { clerkId: userId, billingPeriodStart }
-            },
-            {
-                upsert: true,
-                new: true,
-                runValidators: true
+        let counter;
+        try {
+            counter = await MonthlySessionCounter.findOneAndUpdate(
+                {
+                    clerkId: userId,
+                    billingPeriodStart,
+                    $or: [
+                        { count: { $lt: limits.maxSessionsPerMonth } },
+                        { count: { $exists: false } }
+                    ]
+                },
+                {
+                    $inc: { count: 1 },
+                    $setOnInsert: { clerkId: userId, billingPeriodStart }
+                },
+                {
+                    upsert: true,
+                    new: true,
+                    runValidators: true
+                }
+            ).lean();
+        } catch (err: any) {
+            // Handle E11000 duplicate key error on upsert race
+            if (err.code === 11000) {
+                counter = await MonthlySessionCounter.findOneAndUpdate(
+                    {
+                        clerkId: userId,
+                        billingPeriodStart,
+                        count: { $lt: limits.maxSessionsPerMonth }
+                    },
+                    { $inc: { count: 1 } },
+                    { new: true, runValidators: true }
+                ).lean();
+            } else {
+                throw err;
             }
-        ).lean();
+        }
 
         if (!counter) {
             return { 
@@ -52,27 +71,33 @@ export const startVoiceSession = async (providedClerkId: string, bookId: string)
             };
         }
 
-        let session;
+        const mongoSession = await mongoose.startSession();
+        let voiceSession;
         try {
-            session = await VoiceSession.create({
+            mongoSession.startTransaction();
+            [voiceSession] = await VoiceSession.create([{
                 clerkId: userId,
                 bookId,
                 startedAt: new Date(),
                 billingPeriodStart,
                 durationSeconds: 0,
-            });
+            }], { session: mongoSession });
+            await mongoSession.commitTransaction();
         } catch (createErr) {
+            await mongoSession.abortTransaction();
             // Rollback counter increment on session creation failure
             await MonthlySessionCounter.updateOne(
                 { clerkId: userId, billingPeriodStart },
                 { $inc: { count: -1 } }
             );
             throw createErr;
+        } finally {
+            await mongoSession.endSession();
         }
 
         return {
             success: true,
-            sessionId: session._id.toString(),
+            sessionId: voiceSession._id.toString(),
             maxDurationMinutes: limits.maxDurationPerSession,
         }
 

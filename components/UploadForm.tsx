@@ -15,7 +15,7 @@ import VoiceSelector from './VoiceSelector';
 import LoadingOverlay from './LoadingOverlay';
 import {useAuth, useUser} from "@clerk/nextjs";
 import { toast } from 'sonner';
-import {checkBookExists, createBook, saveBookSegments} from "@/lib/actions/book.actions";
+import {checkBookExists, checkUserQuota, createBook, saveBookSegments} from "@/lib/actions/book.actions";
 import {useRouter} from "next/navigation";
 import {parsePDFFile} from "@/lib/utils";
 import {upload} from "@vercel/blob/client";
@@ -51,6 +51,13 @@ const UploadForm = () => {
         // PostHog -> Track Book Uploads...
 
         try {
+            const quotaCheck = await checkUserQuota();
+            if (!quotaCheck.allowed) {
+                toast.error(`You have reached the maximum number of books allowed for your ${quotaCheck.plan} plan (${quotaCheck.limit}). Please upgrade for more.`);
+                setIsSubmitting(false);
+                return;
+            }
+
             const existsCheck = await checkBookExists(data.title);
 
             if(existsCheck.exists && existsCheck.book) {

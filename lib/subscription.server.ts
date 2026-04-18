@@ -3,7 +3,7 @@ import {PLAN_LIMITS, PLANS, PlanType, getPlanFromClerk} from "@/lib/subscription
 
 export const getCurrentBillingPeriodStart = (): Date => {
     const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
 };
 
 export const getUserPlan = async (): Promise<PlanType> => {

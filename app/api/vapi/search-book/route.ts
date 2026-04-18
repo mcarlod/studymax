@@ -20,7 +20,7 @@ async function processBookSearch(bookId: unknown, query: unknown) {
 
     // Execute search
     console.log(`Executing search for bookId: ${bookIdStr}, queryLength: ${queryStr.length}`);
-    const searchResult = await searchBookSegments(bookIdStr, queryStr, 3);
+    const searchResult = await searchBookSegments(bookIdStr, queryStr, 3, true);
 
     // Return results
     if (!searchResult.success) {
@@ -30,7 +30,7 @@ async function processBookSearch(bookId: unknown, query: unknown) {
 
     if (!searchResult.data?.length) {
         console.log('No segments found for query');
-        return { result: 'No information found about this topic in the book.' };
+        return { result: 'no information found about this topic' };
     }
 
     console.log(`Found ${searchResult.data.length} segments`);
@@ -85,10 +85,15 @@ export async function POST(request: Request) {
 
             if (name === 'searchBook') {
                 const result = await processBookSearch(parsed.bookId, parsed.query);
-                return NextResponse.json(result);
+                // Even for single function call, Vapi often expects a results array if it's a tool-call-result message
+                return NextResponse.json({
+                    results: [result]
+                });
             }
 
-            return NextResponse.json({ result: `Unknown function: ${name}` });
+            return NextResponse.json({
+                results: [{ result: `Unknown function: ${name}` }]
+            });
         }
 
         // Handle toolCallList format (array of calls)

@@ -292,10 +292,25 @@ export function useVapi(book: IBook) {
             // Note: Server-returned maxDurationMinutes is informational only
             // The actual limit is enforced by useLatestRef(limits.maxSessionMinutes * 60)
 
-            const firstMessage = `Hey, good to meet you. Quick question before we dive in - have you actually read ${book.title} yet, or are we starting fresh?`;
+            const firstMessage = messages.length === 0
+                ? `Hey, good to meet you. Quick question before we dive in - have you actually read ${book.title} yet, or are we starting fresh?`
+                : undefined;
+
+            // Map current messages to Vapi's expected format if history exists
+            const modelMessages = messages.length > 0 
+                ? messages.map(msg => ({
+                    role: (msg.role === 'user' ? 'user' : 'assistant') as "user" | "assistant",
+                    content: msg.content
+                }))
+                : undefined;
 
             await getVapi().start(ASSISTANT_ID, {
                 firstMessage,
+                model: modelMessages ? {
+                    messages: modelMessages,
+                    provider: 'openai',
+                    model: 'gpt-4o'
+                } : undefined,
                 variableValues: {
                     title: book.title,
                     author: book.author,
@@ -318,7 +333,7 @@ export function useVapi(book: IBook) {
             setStatus('idle');
             setLimitError('Failed to start voice session. Please try again.');
         }
-    }, [book._id, book.title, book.author, voice, userId]);
+    }, [book._id, book.title, book.author, voice, userId, messages]);
 
     const stop = useCallback(() => {
         isStoppingRef.current = true;
